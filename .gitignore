@@ -1,0 +1,9 @@
+bin/
+obj/
+/packages/
+riderModule.iml
+/_ReSharper.Caches/
+/.idea/.idea.Moka/.idea/encodings.xml
+/.idea/.idea.Moka/.idea/indexLayout.xml
+/.idea/.idea.Moka/.idea/misc.xml
+/.idea/.idea.Moka/.idea/vcs.xml
