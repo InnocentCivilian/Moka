@@ -2,14 +2,14 @@
 
 namespace Moka.Server.Models
 {
-    public class User
+    public class UserModel
     {
         public Guid Guid { get; set; }
         public string Name { get; set; }
         public string Password { get; set; }
         public DateTime Created_at { get; set; }
 
-        public User(Guid guid, string name, string password, DateTime createdAt)
+        public UserModel(Guid guid, string name, string password, DateTime createdAt)
         {
             Guid = guid;
             Name = name;

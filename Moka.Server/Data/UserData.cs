@@ -23,15 +23,16 @@ namespace Moka.Server.Data
             Created_at = createdAt;
         }
 
-        public static UserData FromUser(User user)
+        public static UserData FromUser(Models.UserModel user)
         {
             return new UserData(user.Guid, user.Name, user.Password, user.Created_at);
         }
 
-        public User ToUser()
+        public UserModel ToUserModel()
         {
-            return new User(Guid, Name, Password, Created_at);
+            return new UserModel(Guid, Name, Password, Created_at);
         }
+        
     }
     
 }

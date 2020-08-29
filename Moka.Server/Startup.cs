@@ -1,13 +1,13 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Moka.Server.Data;
-using Microsoft.Extensions.Options;
 using Moka.Server.Service;
+using Grpc.Core;
+using Moka.Server.Helper;
 
 namespace Moka.Server
 {
@@ -25,14 +25,27 @@ namespace Moka.Server
         public void ConfigureServices(IServiceCollection services)
         {
             // requires using Microsoft.Extensions.Options
+            services.AddHttpContextAccessor();
+ 
+            // services.AddAuthorization(options =>
+            // {
+            //     options.AddPolicy("protectedScope", policy =>
+            //     {
+            //         policy.RequireClaim("scope", "grpc_protected_scope");
+            //     });
+            // });
+
             services.Configure<MokaDataBaseSettings>(Configuration.GetSection(nameof(MokaDataBaseSettings)));
 
             services.AddSingleton<IMokaDataBaseSettings>(sp =>
                 sp.GetRequiredService<IOptions<MokaDataBaseSettings>>().Value);
             services.AddSingleton<UserService>();
-            services.AddSingleton<MessageService>();
+            // services.AddSingleton<MessageService>();
             services.AddControllers();
-
+            services.AddGrpc(options =>
+            {
+                options.EnableDetailedErrors = true;
+            });
                 
         }
 
@@ -48,9 +61,16 @@ namespace Moka.Server
 
             app.UseRouting();
 
-            app.UseAuthorization();
+            // app.UseAuthentication();
+            // app.UseAuthorization();
+            app.UseMiddleware<JwtMiddleware>();
 
-            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers(); 
+                endpoints.MapGrpcService<MokaMessageService>();
+            });
+            
         }
     }
 }

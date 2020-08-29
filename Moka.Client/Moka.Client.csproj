@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Grpc.Net.Client" Version="2.31.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Moka.SharedKernel\Moka.SharedKernel.csproj" />
+    </ItemGroup>
+
+
+
+
+</Project>

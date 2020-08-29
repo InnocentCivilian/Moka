@@ -6,13 +6,13 @@ namespace Moka.Server.Data.Results
     {
         public bool IsAlreadyExists { get; set; }
         public bool IsCreated { get; set; }
-        public User User { get; set; }
+        public UserModel UserModel { get; set; }
 
-        public CreateUserResult(bool isAlreadyExists, bool isCreated, User user)
+        public CreateUserResult(bool isAlreadyExists, bool isCreated, UserModel userModel)
         {
             IsAlreadyExists = isAlreadyExists;
             IsCreated = isCreated;
-            User = user;
+            UserModel = userModel;
         }
     }
 } 

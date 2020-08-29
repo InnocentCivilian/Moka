@@ -1,0 +1,44 @@
+﻿syntax = "proto3";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service MokaMessenger{
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc GetWeatherStream (google.protobuf.Empty) returns (stream WeatherData);
+
+  //  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
+}
+message WeatherData {
+  google.protobuf.Timestamp dateTimeStamp = 1;
+  int32 temperatureC = 2;
+  int32 temperatureF = 3;
+  string summary = 4;
+}
+enum MessageType {
+  Text = 0;
+  Image = 1;
+  Voice = 2;
+  Document = 3;
+}
+message User{
+  string id = 1;
+  string username = 2;
+  string nickname = 3;
+}
+message RegisterRequest{
+  User user = 1;
+  string password = 2;
+}
+
+message RegisterResponse{
+  string id = 1;
+}
+message SendMessageRequest {
+  string receiverId = 1;
+  bytes payload = 2;
+  MessageType type = 3;
+}
+message SendMessageResponse{
+  string messageId = 1;
+  string createDateTime = 2;
+}

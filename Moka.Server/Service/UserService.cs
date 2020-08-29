@@ -18,25 +18,28 @@ namespace Moka.Server.Service
             _users = database.GetCollection<UserData>(settings.UsersCollectionName);
         }
 
-        public async Task<CreateUserResult> FindOrCreate(User user)
+        public async Task<CreateUserResult> FindOrCreate(UserModel user)
         {
-            var find = await Find(user);
-            if (find == null)
-            {
-                user.Guid = Guid.NewGuid();
-                await _users.InsertOneAsync(UserData.FromUser(user));
-                var newUser = await Find(user);
-                return new CreateUserResult(false,true,newUser.ToUser());
-            }
-            return new CreateUserResult(true,false,find.ToUser());
+            var find = await FindAsync(user);
+            if (find != null) return new CreateUserResult(true, false, find.ToUserModel());
+            user.Guid = Guid.NewGuid();
+            await _users.InsertOneAsync(UserData.FromUser(user));
+            var newUser = await FindAsync(user);
+            return new CreateUserResult(false, true, newUser.ToUserModel());
         }
-        
 
-        public async Task<UserData> Find(User user)
+
+        public async Task<UserData> FindAsync(UserModel user)
         {
             var result = await _users.FindAsync(u => u.Name == user.Name || u.Guid == user.Guid);
             return await result.FirstOrDefaultAsync();
         }
-        
+
+        public UserData Find(string name)
+        {
+            var result = _users.Find(u => u.Name == name);
+            var user = result.First();
+            return user;
+        }
     }
 }

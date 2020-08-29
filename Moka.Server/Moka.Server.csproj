@@ -5,12 +5,18 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="DTO" />
-      <Folder Include="Manager" />
+        <Folder Include="DTO" />
+        <Folder Include="Manager" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="MongoDB.Driver" Version="2.11.1" />
+        <PackageReference Include="Grpc.AspNetCore" Version="2.31.0" />
+        <PackageReference Include="Grpc.Core" Version="2.31.0" />
+        <PackageReference Include="Grpc.Core.Api" Version="2.31.0" />
+        <PackageReference Include="MongoDB.Driver" Version="2.11.1" />
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Moka.SharedKernel\Moka.SharedKernel.csproj" />
     </ItemGroup>
 
 </Project>
