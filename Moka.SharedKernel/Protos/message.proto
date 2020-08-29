@@ -4,15 +4,23 @@ import "google/protobuf/timestamp.proto";
 
 service MokaMessenger{
   rpc Register(RegisterRequest) returns (RegisterResponse);
-  rpc GetWeatherStream (google.protobuf.Empty) returns (stream WeatherData);
+  //  rpc GetWeatherStream (google.protobuf.Empty) returns (stream WeatherData);
+  rpc GetMessageStream (google.protobuf.Empty) returns (stream RecievedMessageData);
 
-  //  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
+  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
 }
-message WeatherData {
-  google.protobuf.Timestamp dateTimeStamp = 1;
-  int32 temperatureC = 2;
-  int32 temperatureF = 3;
-  string summary = 4;
+//message WeatherData {
+//  google.protobuf.Timestamp dateTimeStamp = 1;
+//  int32 temperatureC = 2;
+//  int32 temperatureF = 3;
+//  string summary = 4;
+//}
+message RecievedMessageData{
+  string messageId = 1;
+  string createDateTime = 2;
+  string senderId = 3;
+  bytes payload = 4;
+  MessageType type = 5;
 }
 enum MessageType {
   Text = 0;

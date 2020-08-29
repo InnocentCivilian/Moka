@@ -7,7 +7,15 @@ using MongoDB.Driver;
 
 namespace Moka.Server.Service
 {
-    public class UserService
+    public interface IUserService
+    {
+        Task<CreateUserResult> FindOrCreate(UserModel user);
+        Task<UserData> FindAsync(UserModel user);
+        Task<UserData> FindAsync(string name);
+        UserData Find(string name);
+    }
+
+    public class UserService : IUserService
     {
         private readonly IMongoCollection<UserData> _users;
 
@@ -32,6 +40,11 @@ namespace Moka.Server.Service
         public async Task<UserData> FindAsync(UserModel user)
         {
             var result = await _users.FindAsync(u => u.Name == user.Name || u.Guid == user.Guid);
+            return await result.FirstOrDefaultAsync();
+        }
+        public async Task<UserData> FindAsync(string name)
+        {
+            var result = await _users.FindAsync(u => u.Name == name);
             return await result.FirstOrDefaultAsync();
         }
 

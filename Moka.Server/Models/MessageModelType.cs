@@ -2,7 +2,7 @@
 
 namespace Moka.Server.Models
 {
-    public enum MessageType
+    public enum MessageModelType
     {
         Text,
         Image,

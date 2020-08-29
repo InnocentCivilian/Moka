@@ -8,6 +8,7 @@ using Moka.Server.Data;
 using Moka.Server.Service;
 using Grpc.Core;
 using Moka.Server.Helper;
+using Moka.Server.Manager;
 
 namespace Moka.Server
 {
@@ -24,6 +25,7 @@ namespace Moka.Server
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+
             // requires using Microsoft.Extensions.Options
             services.AddHttpContextAccessor();
  
@@ -36,11 +38,14 @@ namespace Moka.Server
             // });
 
             services.Configure<MokaDataBaseSettings>(Configuration.GetSection(nameof(MokaDataBaseSettings)));
+            services.AddSingleton<OnlineUsersManager>();
 
             services.AddSingleton<IMokaDataBaseSettings>(sp =>
                 sp.GetRequiredService<IOptions<MokaDataBaseSettings>>().Value);
-            services.AddSingleton<UserService>();
-            // services.AddSingleton<MessageService>();
+
+            services.AddScoped<IUserService,UserService>();
+            services.AddScoped<IMessageService,MessageService>();
+
             services.AddControllers();
             services.AddGrpc(options =>
             {
@@ -63,7 +68,7 @@ namespace Moka.Server
 
             // app.UseAuthentication();
             // app.UseAuthorization();
-            app.UseMiddleware<JwtMiddleware>();
+            // app.UseMiddleware<JwtMiddleware>();
 
             app.UseEndpoints(endpoints =>
             {
