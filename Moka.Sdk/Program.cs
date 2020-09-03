@@ -7,8 +7,10 @@ using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Grpc.Net.Client;
+using Moka.Sdk.Helper;
+using Moka.SharedKernel.Encryption;
 
-namespace Moka.Client
+namespace Moka.Sdk
 {
     class Program
     {
@@ -24,6 +26,7 @@ namespace Moka.Client
         }
         static async Task Main(string[] args)
         {
+            // RSAHandler.GetKey("server");
             var ar =args.FirstOrDefault();
             ar = ar.Split("=").Last();
             using var channel = GrpcChannel.ForAddress("https://localhost:5001");
@@ -40,35 +43,39 @@ namespace Moka.Client
             var streamingCall = client.GetMessageStream(new Empty(), headers:metadata);
             if (ar == "one")
             {
-                await Task.Delay(1000).ContinueWith(t =>
+                while (true)
                 {
-                    var resp =  client.SendMessage(new SendMessageRequest{Payload = ByteString.CopyFrom("hiii",Encoding.UTF8),ReceiverId = "hahahatwo",Type = MessageType.Text},headers:metadata);
-                    Console.WriteLine(resp.MessageId);
-                    Console.WriteLine(resp.CreateDateTime);
-                });
+                    await Task.Delay(1000).ContinueWith(t =>
+                    {
+                        var resp =  client.SendMessage(new Message{LocalId = Guid.NewGuid().ToString(),Payload = ByteString.CopyFrom("hiii",Encoding.UTF8),ReceiverId = "hahahatwo",Type = MessageType.Text},headers:metadata);
+                        Console.WriteLine(resp.Id);
+                        Console.WriteLine(resp.CreatedAtTimeStamp);
+                        Console.WriteLine(resp.DeliveredAtTimeStamp);
+                    });
+                }
+                
+            }
+
+            if (ar == "two")
+            {
+                var resp = await client.GetOfflineMessageStreamAsync(new Empty(), headers: metadata);
+                var msgs = resp.Messages.Select(x => x).ToList();
+                var delv = msgs.Max(x => x.CreatedAtTimeStamp);
+                var delvresp = await client.CumulativeAckAsync(new MessageAck {AckType = AckType.Deliver,TimeStamp = delv}, headers: metadata);
+
             }
             try
             {
                 await foreach (var messageData in streamingCall.ResponseStream.ReadAllAsync())
                 {
-                    Console.WriteLine($"{messageData.SenderId} | {messageData.MessageId} | {messageData.Payload} ");
+                    Console.WriteLine($"{messageData.SenderId} | {messageData.Id} | {messageData.Payload} ");
                 }
             }
             catch (RpcException ex) when (ex.StatusCode == StatusCode.Cancelled)
             {               
                 Console.WriteLine("Stream cancelled.");
             }
-
-            if (ar == "one")
-            {
-                await Task.Delay(1000).ContinueWith(t =>
-                {
-                   var resp =  client.SendMessage(new SendMessageRequest{Payload = ByteString.CopyFrom("hiii",Encoding.UTF8),ReceiverId = "hahahatwo",Type = MessageType.Text},headers:metadata);
-                   Console.WriteLine(resp.MessageId);
-                   Console.WriteLine(resp.CreateDateTime);
-                });
-            }
-
+            
             Console.ReadKey();
         }
     }

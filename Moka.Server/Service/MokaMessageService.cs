@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using Google.Protobuf;
+using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
+using Moka.Server.Events;
 using Moka.Server.Manager;
 using Moka.Server.Models;
 using UserModel = Moka.Server.Models.UserModel;
@@ -19,14 +19,18 @@ namespace Moka.Server.Service
         private readonly IUserService _userService;
         private readonly IMessageService _messageService;
         private readonly OnlineUsersManager _onlineUsers;
+        private MessageEvents _messageEvents;
+        private UserEvents _userEvents;
 
         public MokaMessageService(ILogger<MokaMessageService> logger, IUserService userService,
-            OnlineUsersManager onlineUsers, IMessageService messageService)
+            OnlineUsersManager onlineUsers, IMessageService messageService, MessageEvents messageEvents, UserEvents userEvents)
         {
             _logger = logger;
             _userService = userService;
             _onlineUsers = onlineUsers;
             _messageService = messageService;
+            _messageEvents = messageEvents;
+            _userEvents = userEvents;
         }
 
         public override async Task<RegisterResponse> Register(RegisterRequest request, ServerCallContext context)
@@ -40,69 +44,61 @@ namespace Moka.Server.Service
             });
         }
 
-        public override async Task GetMessageStream(Empty _, IServerStreamWriter<RecievedMessageData> responseStream,
+        public override async Task GetMessageStream(Empty _, IServerStreamWriter<Message> responseStream,
             ServerCallContext context)
         {
             _logger.LogInformation("user call: {Name}", context.RequestHeaders.Count);
             var headers = context.RequestHeaders;
             var user = await _userService.FindAsync(headers.GetValue("authorization"));
-            _onlineUsers.Join(user.Name, responseStream);
-            // foreach (var header in headers)
-            // {
-            //     _logger.LogInformation(header.Key);
-            //     _logger.LogInformation(header.Value);
-            // }
-            // var rng = new Random();
-            // var now = DateTime.UtcNow;
-            // var Summaries = new string[] {"sunny", "cloudy", "rainy"};
-            // var i = 0;
-            // while (!context.CancellationToken.IsCancellationRequested && i < 20)
-            // {
-            //     await Task.Delay(500); // Gotta look busy
-            //
-            //     var forecast = new WeatherData
-            //     {
-            //         DateTimeStamp = Timestamp.FromDateTime(now.AddDays(i++)),
-            //         TemperatureC = rng.Next(-20, 55),
-            //         Summary = Summaries[rng.Next(Summaries.Length)]
-            //     };
-            //
-            //     _logger.LogInformation("Sending WeatherData response");
-            //
-            //     await responseStream.WriteAsync(forecast);
-            // }
+            _userEvents.OnUserOnlined(new UserOnlineEventArgs{StreamWriter = responseStream,User = user.ToUserModel()});
+            // _onlineUsers.Join(user.Guid, responseStream);
             while (!context.CancellationToken.IsCancellationRequested)
             {
                 await Task.Delay(100);
             }
-            _logger.LogInformation("connection closed",user.Name);
+            _userEvents.OnUserOfflined(user.ToUserModel());
+            // _logger.LogInformation("connection closed", user.Name);
         }
 
         // public override async Task>
-        public override async Task<SendMessageResponse> SendMessage(SendMessageRequest request,
+        public override async Task<Message> SendMessage(Message request,
             ServerCallContext context)
         {
             var headers = context.RequestHeaders;
             var token = headers.GetValue("authorization");
             var sender = await _userService.FindAsync(token);
             var reciever = await _userService.FindAsync(request.ReceiverId);
-
-            MessageModel msgModel = new MessageModel(Guid.Empty, request.Payload.ToByteArray(),
-                MessageModelType.Text, sender.ToUserModel(), reciever.ToUserModel(), DateTime.Now);
-            var stored = await _messageService.Store(msgModel);
+            request.SenderId = sender.Guid.ToString();
+            request.ReceiverId = reciever.Guid.ToString();
+            var stored = await _messageService.Store(request);
             Console.WriteLine(stored.Id);
-            await _onlineUsers.SendMeesageIfOnline(reciever.Name,
-                new RecievedMessageData
+            // await _onlineUsers.SendMeesageIfOnline(stored.ToMessage());
+            _messageEvents.OnMessageReceived(stored.ToMessage());
+            return stored.ToMessage();
+        }
+
+        public override  async Task<MessageArray> GetOfflineMessageStream(Empty request, ServerCallContext context)
+        {
+            var headers = context.RequestHeaders;
+            var token = headers.GetValue("authorization");
+            var user = await _userService.FindAsync(token);
+            var messagesData = await _messageService.FindUserInboxMessages(user);
+            var messages = messagesData.Select(x => x.ToMessage()).ToList();
+            return await Task.FromResult(
+                new MessageArray
                 {
-                    CreateDateTime = stored.Created_at.ToString(), MessageId = stored.Id,
-                    Payload = ByteString.CopyFrom(stored.Data), SenderId = sender.Name, Type = MessageType.Text
-                });
-            var resp = new SendMessageResponse
-            {
-                CreateDateTime = stored.ToString(),
-                MessageId = stored.Id
-            };
-            return resp;
+                    Messages = {messages}
+                }
+            );
+        }
+
+        public override async Task<Empty> CumulativeAck(MessageAck request, ServerCallContext context)
+        {
+            var headers = context.RequestHeaders;
+            var token = headers.GetValue("authorization");
+            var user = await _userService.FindAsync(token);
+            await _messageService.UpdateAck(user.ToUserModel(), request);
+            return new Empty();
         }
     }
 }

@@ -4,23 +4,19 @@ import "google/protobuf/timestamp.proto";
 
 service MokaMessenger{
   rpc Register(RegisterRequest) returns (RegisterResponse);
-  //  rpc GetWeatherStream (google.protobuf.Empty) returns (stream WeatherData);
-  rpc GetMessageStream (google.protobuf.Empty) returns (stream RecievedMessageData);
-
-  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
+  rpc GetMessageStream (google.protobuf.Empty) returns (stream Message);
+  rpc SendMessage(Message) returns (Message);
+  rpc GetOfflineMessageStream (google.protobuf.Empty) returns (MessageArray);
+  rpc CumulativeAck(MessageAck) returns (google.protobuf.Empty);
 }
-//message WeatherData {
-//  google.protobuf.Timestamp dateTimeStamp = 1;
-//  int32 temperatureC = 2;
-//  int32 temperatureF = 3;
-//  string summary = 4;
-//}
-message RecievedMessageData{
-  string messageId = 1;
-  string createDateTime = 2;
-  string senderId = 3;
-  bytes payload = 4;
-  MessageType type = 5;
+message MessageAck{
+  google.protobuf.Timestamp TimeStamp = 1;
+  AckType ackType = 2;
+  string userId = 3;
+}
+enum AckType{
+  Deliver = 0;
+  Read = 1;
 }
 enum MessageType {
   Text = 0;
@@ -41,12 +37,17 @@ message RegisterRequest{
 message RegisterResponse{
   string id = 1;
 }
-message SendMessageRequest {
-  string receiverId = 1;
-  bytes payload = 2;
-  MessageType type = 3;
+message Message{
+  string Id = 1;
+  string localId = 2;
+  string senderId = 3;
+  string receiverId = 4;
+  bytes payload = 5;
+  MessageType type = 6;
+  google.protobuf.Timestamp created_at_TimeStamp = 7;
+  google.protobuf.Timestamp delivered_at_TimeStamp = 8;
+  google.protobuf.Timestamp read_at_TimeStamp = 9;
 }
-message SendMessageResponse{
-  string messageId = 1;
-  string createDateTime = 2;
+message MessageArray{
+  repeated Message messages = 1;
 }

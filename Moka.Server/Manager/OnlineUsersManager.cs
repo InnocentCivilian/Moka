@@ -1,7 +1,10 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
+using Moka.Server.Events;
+using Moka.Server.Models;
 
 namespace Moka.Server.Manager
 {
@@ -16,34 +19,59 @@ namespace Moka.Server.Manager
     {
         private readonly ILogger<OnlineUsersManager> _logger;
 
-        private ConcurrentDictionary<string, IServerStreamWriter<RecievedMessageData>> users;
+        private ConcurrentDictionary<Guid, IServerStreamWriter<Message>> users;
+        private MessageEvents _messageEvents;
+        private UserEvents _userEvents;
 
-        public OnlineUsersManager(ILogger<OnlineUsersManager> logger)
+        public OnlineUsersManager(ILogger<OnlineUsersManager> logger, MessageEvents messageEvents,
+            UserEvents userEvents)
         {
             _logger = logger;
-            users = new ConcurrentDictionary<string, IServerStreamWriter<RecievedMessageData>>();
+            _messageEvents = messageEvents;
+            _userEvents = userEvents;
+            users = new ConcurrentDictionary<Guid, IServerStreamWriter<Message>>();
+            _messageEvents.MessageReceived += OnMessageReceived;
+            _userEvents.UserOnlined += OnUserOnlined;
+            _userEvents.UserOfflined += OnUserOfflined;
         }
 
-        public void Join(string name, IServerStreamWriter<RecievedMessageData> response)
+        public void Join(Guid guid, IServerStreamWriter<Message> response)
         {
-            _logger.LogInformation("User added to onlines" + name);
-            users.TryAdd(name, response);
-            _logger.LogInformation("onlines"+users.Count);
+            _logger.LogInformation("User added to onlines " + guid);
+            users.TryAdd(guid, response);
+            _logger.LogInformation("onlines" + users.Count);
         }
 
-        public void Remove(string name) => users.TryRemove(name, out var s);
-
-        public async Task SendMeesageIfOnline(string user, RecievedMessageData data)
+        protected virtual void OnMessageReceived(object sender, Message message)
         {
-            _logger.LogInformation("onlines sending"+users.Count);
+            SendMeesageIfOnline(message);
+        }
 
-            if (users.ContainsKey(user))
+        protected virtual void OnUserOnlined(object sender, UserOnlineEventArgs eventArgs)
+        {
+            _logger.LogInformation("user became Online EVENT" + eventArgs.User.Guid);
+            Join(eventArgs.User.Guid, eventArgs.StreamWriter);
+        }
+
+        protected virtual void OnUserOfflined(object sender, UserModel userModel)
+        {
+            _logger.LogInformation("user became Offline EVENT" + userModel.Guid);
+            Remove(userModel.Guid);
+        }
+
+        public void Remove(Guid guid) => users.TryRemove(guid, out var s);
+
+        public async Task SendMeesageIfOnline(Message message)
+        {
+            _logger.LogInformation("onlines sending" + users.Count);
+            var to = Guid.Parse(message.ReceiverId);
+            if (users.ContainsKey(to))
             {
-                await users[user].WriteAsync(data);
+                await users[to].WriteAsync(message);
             }
             else
             {
-                _logger.LogInformation("user offline" + user);
+                _logger.LogInformation("user offline" + to);
             }
         }
     }

@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using Moka.Server.Data;
 using Moka.Server.Service;
 using Grpc.Core;
+using Moka.Server.Events;
 using Moka.Server.Helper;
 using Moka.Server.Manager;
 
@@ -38,6 +39,8 @@ namespace Moka.Server
             // });
 
             services.Configure<MokaDataBaseSettings>(Configuration.GetSection(nameof(MokaDataBaseSettings)));
+            services.AddSingleton<UserEvents>();
+            services.AddSingleton<MessageEvents>();
             services.AddSingleton<OnlineUsersManager>();
 
             services.AddSingleton<IMokaDataBaseSettings>(sp =>

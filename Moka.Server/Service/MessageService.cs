@@ -1,17 +1,22 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.Logging;
 using Moka.Server.Data;
 using Moka.Server.Models;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace Moka.Server.Service
 {
     public interface IMessageService
     {
-        Task<MessageData> Store(MessageModel message);
-        Task<MessageData> Find(MessageModel message);
-        Task sayHi();
+        Task<MessageData> Store(Message message);
+        Task<MessageData> Find(Message message);
+        Task<List<MessageData>> FindUserInboxMessages(UserData user);
+        Task UpdateAck(UserModel user, MessageAck ack);
+
     }
 
     public class MessageService : IMessageService
@@ -26,40 +31,51 @@ namespace Moka.Server.Service
             var database = client.GetDatabase(settings.DatabaseName);
             _messages = database.GetCollection<MessageData>(settings.MessagesCollectionName);
         }
-
-        public async Task<MessageData> Store(MessageModel message)
+        public async Task<List<MessageData>> FindUserInboxMessages(UserData user)
+        {
+            var res = await _messages.FindAsync(m => m.To == user.Guid);
+            return await res.ToListAsync();
+        }
+        public async Task<MessageData> Store(Message message)
         {
             _logger.LogInformation("storing message");
-            message.Guid = Guid.NewGuid();
-            await _messages.InsertOneAsync(MessageData.FromMessage(message));
-            var stored = await Find(message);
-            return stored;
-            // return new StoreMessageResult(true, message.Created_at, stored.ToMessage());
+            message.CreatedAtTimeStamp = Timestamp.FromDateTime(DateTime.UtcNow);
+            var msg = MessageData.FromMessage(message);
+            await _messages.InsertOneAsync(msg);
+            return msg;
+            
         }
 
-        public async Task<MessageData> Find(MessageModel message)
+        public async Task<MessageData> Find(Message message)
         {
-            var res = await _messages.FindAsync(m => m.Guid == message.Guid);
+            var res = await _messages.FindAsync(m => m.Id == ObjectId.Parse(message.Id));
             return await res.FirstOrDefaultAsync();
         }
 
-        public async Task sayHi()
+        public async Task<MessageData> Find(Guid localId)
         {
-            Console.WriteLine("hiii");
+            var res = await _messages.FindAsync(m => m.LocalId == localId);
+            return await res.FirstOrDefaultAsync();
         }
-    }
 
-    public class StoreMessageResult
-    {
-        public bool isSuccess { get; set; }
-        public DateTime CreateDateTime { get; set; }
-        public MessageModel Message { get; set; }
-
-        public StoreMessageResult(bool isSuccess, DateTime dateTime, MessageModel message)
+        public async Task UpdateAck(UserModel user,MessageAck ack)
         {
-            this.isSuccess = isSuccess;
-            CreateDateTime = dateTime;
-            Message = message;
+            switch (ack.AckType)
+            {
+                case AckType.Deliver:
+                    var condDeliver = Builders<MessageData>.Filter.Eq("To", user.Guid.ToString()) & Builders<MessageData>.Filter.Eq("Delivered_at", default(DateTime));
+                    var updateDeliver = Builders<MessageData>.Update.Set("Delivered_at", ack.TimeStamp.ToDateTime());
+                    var result = await _messages.UpdateManyAsync(condDeliver,updateDeliver);
+                    _logger.LogInformation("marked as delv: "+result.ModifiedCount);
+                    break;
+                case AckType.Read:
+                    var condRead = Builders<MessageData>.Filter.Eq("From", ack.UserId) & Builders<MessageData>.Filter.Eq("To", user.Guid.ToString()) & Builders<MessageData>.Filter.Eq("Read_at", default(DateTime)) & Builders<MessageData>.Filter.Eq("Read_at", default(DateTime));
+                    var updateRead = Builders<MessageData>.Update.Set("Read_at", ack.TimeStamp.ToDateTime());
+                    await _messages.UpdateManyAsync(condRead,updateRead);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
     }
 }
