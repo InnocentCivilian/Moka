@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Moka.Server.Data;
 using Moka.Server.Events;
 using Moka.Server.Manager;
 using Moka.Server.Models;
@@ -14,6 +17,8 @@ using UserModel = Moka.Server.Models.UserModel;
 namespace Moka.Server.Service
 {
     // [Authorize(Policy = "protectedScope")]
+    [Authorize]
+
     public class MokaMessageService : MokaMessenger.MokaMessengerBase
     {
         private readonly ILogger<MokaMessageService> _logger;
@@ -22,9 +27,12 @@ namespace Moka.Server.Service
         private readonly OnlineUsersManager _onlineUsers;
         private MessageEvents _messageEvents;
         private UserEvents _userEvents;
+        private UserData _currentUser;
+        private IHttpContextAccessor _httpContextAccessor;
 
         public MokaMessageService(ILogger<MokaMessageService> logger, IUserService userService,
-            OnlineUsersManager onlineUsers, IMessageService messageService, MessageEvents messageEvents, UserEvents userEvents)
+            OnlineUsersManager onlineUsers, IMessageService messageService, MessageEvents messageEvents,
+            UserEvents userEvents, IHttpContextAccessor httpContextAccessor)
         {
             _logger = logger;
             _userService = userService;
@@ -32,6 +40,14 @@ namespace Moka.Server.Service
             _messageService = messageService;
             _messageEvents = messageEvents;
             _userEvents = userEvents;
+            _httpContextAccessor = httpContextAccessor;
+            var user = httpContextAccessor.HttpContext.User;
+            if (user.Identity.IsAuthenticated)
+            {
+                var userId = user.FindFirst(ClaimTypes.NameIdentifier).Value;
+                _currentUser = _userService.FindById(userId);
+            }
+            
         }
 
         public override async Task<RegisterResponse> Register(RegisterRequest request, ServerCallContext context)
@@ -44,51 +60,38 @@ namespace Moka.Server.Service
                 Id = res.UserModel.Guid.ToString()
             });
         }
-        [Authorize]
 
         public override async Task GetMessageStream(Empty _, IServerStreamWriter<Message> responseStream,
             ServerCallContext context)
         {
-            var mdl = context.GetHttpContext().User;
-
-            _logger.LogInformation("mdl user call: {Name}", mdl.Identity.Name);
+            _logger.LogInformation("message stream user call: {Name}", _currentUser.Name);
             
-            // _logger.LogInformation("user call: {Name}", context.RequestHeaders.Count);
-            // var headers = context.RequestHeaders;
-            var user = await _userService.FindAsync(mdl.Identity.Name);
-            _userEvents.OnUserOnlined(new UserOnlineEventArgs{StreamWriter = responseStream,User = user.ToUserModel()});
-            // _onlineUsers.Join(user.Guid, responseStream);
+            _userEvents.OnUserOnlined(
+                new UserOnlineEventArgs {StreamWriter = responseStream, User = _currentUser.ToUserModel()});
             while (!context.CancellationToken.IsCancellationRequested)
             {
                 await Task.Delay(100);
             }
-            _userEvents.OnUserOfflined(user.ToUserModel());
-            // _logger.LogInformation("connection closed", user.Name);
+
+            _userEvents.OnUserOfflined(_currentUser.ToUserModel());
         }
 
-        // public override async Task>
         public override async Task<Message> SendMessage(Message request,
             ServerCallContext context)
         {
-            var headers = context.RequestHeaders;
-            var token = headers.GetValue("authorization");
-            var sender = await _userService.FindAsync(token);
+
             var reciever = await _userService.FindAsync(request.ReceiverId);
-            request.SenderId = sender.Guid.ToString();
+            request.SenderId = _currentUser.Guid.ToString();
             request.ReceiverId = reciever.Guid.ToString();
             var stored = await _messageService.Store(request);
-            Console.WriteLine(stored.Id);
-            // await _onlineUsers.SendMeesageIfOnline(stored.ToMessage());
+            _logger.LogInformation("new message stored {id}",stored.Id);
             _messageEvents.OnMessageReceived(stored.ToMessage());
             return stored.ToMessage();
         }
 
-        public override  async Task<MessageArray> GetOfflineMessageStream(Empty request, ServerCallContext context)
+        public override async Task<MessageArray> GetOfflineMessageStream(Empty request, ServerCallContext context)
         {
-            var headers = context.RequestHeaders;
-            var token = headers.GetValue("authorization");
-            var user = await _userService.FindAsync(token);
-            var messagesData = await _messageService.FindUserInboxMessages(user);
+            var messagesData = await _messageService.FindUserInboxMessages(_currentUser);
             var messages = messagesData.Select(x => x.ToMessage()).ToList();
             return await Task.FromResult(
                 new MessageArray
@@ -100,10 +103,7 @@ namespace Moka.Server.Service
 
         public override async Task<Empty> CumulativeAck(MessageAck request, ServerCallContext context)
         {
-            var headers = context.RequestHeaders;
-            var token = headers.GetValue("authorization");
-            var user = await _userService.FindAsync(token);
-            await _messageService.UpdateAck(user.ToUserModel(), request);
+            await _messageService.UpdateAck(_currentUser.ToUserModel(), request);
             return new Empty();
         }
     }

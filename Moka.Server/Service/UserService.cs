@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Moka.Server.Data;
 using Moka.Server.Data.Results;
 using Moka.Server.Models;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace Moka.Server.Service
@@ -13,6 +14,7 @@ namespace Moka.Server.Service
         Task<UserData> FindAsync(UserModel user);
         Task<UserData> FindAsync(string name);
         UserData Find(string name);
+        UserData FindById(string id);
     }
 
     public class UserService : IUserService
@@ -51,6 +53,13 @@ namespace Moka.Server.Service
         public UserData Find(string name)
         {
             var result = _users.Find(u => u.Name == name);
+            var user = result.First();
+            return user;
+        }
+
+        public UserData FindById(string id)
+        {
+            var result = _users.Find(u => u.Id == id);
             var user = result.First();
             return user;
         }

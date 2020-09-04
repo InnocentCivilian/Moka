@@ -26,7 +26,7 @@ namespace Moka.Sdk
             var httpClient = new HttpClient();
             var request = new HttpRequestMessage
             {
-                RequestUri = new Uri($"{Address}/generateJwtToken?name={HttpUtility.UrlEncode(username)}"),
+                RequestUri = new Uri($"{Address}/api/users/generateJwtToken?name={HttpUtility.UrlEncode(username)}"),
                 Method = HttpMethod.Get,
                 Version = new Version(2, 0)
             };
@@ -51,7 +51,7 @@ namespace Moka.Sdk
             if (token != null)
             {
                 headers = new Metadata();
-                // headers.Add("Authorization", $"Bearer {token}");
+                headers.Add("Authorization", $"Bearer {token}");
             }
 
             // var metadata = new Metadata
