@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 using Moka.Server.Events;
 using Moka.Server.Manager;
@@ -43,13 +44,18 @@ namespace Moka.Server.Service
                 Id = res.UserModel.Guid.ToString()
             });
         }
+        [Authorize]
 
         public override async Task GetMessageStream(Empty _, IServerStreamWriter<Message> responseStream,
             ServerCallContext context)
         {
-            _logger.LogInformation("user call: {Name}", context.RequestHeaders.Count);
-            var headers = context.RequestHeaders;
-            var user = await _userService.FindAsync(headers.GetValue("authorization"));
+            var mdl = context.GetHttpContext().User;
+
+            _logger.LogInformation("mdl user call: {Name}", mdl.Identity.Name);
+            
+            // _logger.LogInformation("user call: {Name}", context.RequestHeaders.Count);
+            // var headers = context.RequestHeaders;
+            var user = await _userService.FindAsync(mdl.Identity.Name);
             _userEvents.OnUserOnlined(new UserOnlineEventArgs{StreamWriter = responseStream,User = user.ToUserModel()});
             // _onlineUsers.Join(user.Guid, responseStream);
             while (!context.CancellationToken.IsCancellationRequested)
