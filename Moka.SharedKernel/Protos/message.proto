@@ -3,7 +3,6 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
 service MokaMessenger{
-  rpc Register(RegisterRequest) returns (RegisterResponse);
   rpc GetMessageStream (google.protobuf.Empty) returns (stream Message);
   rpc SendMessage(Message) returns (Message);
   rpc GetOfflineMessageStream (google.protobuf.Empty) returns (MessageArray);
@@ -23,19 +22,6 @@ enum MessageType {
   Image = 1;
   Voice = 2;
   Document = 3;
-}
-message User{
-  string id = 1;
-  string username = 2;
-  string nickname = 3;
-}
-message RegisterRequest{
-  User user = 1;
-  string password = 2;
-}
-
-message RegisterResponse{
-  string id = 1;
 }
 message Message{
   string Id = 1;

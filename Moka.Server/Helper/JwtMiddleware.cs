@@ -35,7 +35,7 @@ namespace Moka.Server.Helper
         {
             Console.WriteLine(token + "asked");
             var user = _userService.Find(token);
-            Console.WriteLine(user.Name + "connected");
+            Console.WriteLine(user.NickName + "connected");
             context.Items["User"] = user;
 
             // try

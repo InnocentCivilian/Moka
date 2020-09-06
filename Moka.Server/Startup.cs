@@ -127,6 +127,7 @@ namespace Moka.Server
             {
                 endpoints.MapControllers();
                 endpoints.MapGrpcService<MokaMessageService>();
+                endpoints.MapGrpcService<MokaUserService>();
             });
         }
     }

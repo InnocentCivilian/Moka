@@ -41,18 +41,18 @@ namespace Moka.Server.Service
 
         public async Task<UserData> FindAsync(UserModel user)
         {
-            var result = await _users.FindAsync(u => u.Name == user.Name || u.Guid == user.Guid);
+            var result = await _users.FindAsync(u => u.Username == user.UserName || u.Guid == user.Guid);
             return await result.FirstOrDefaultAsync();
         }
         public async Task<UserData> FindAsync(string name)
         {
-            var result = await _users.FindAsync(u => u.Name == name);
+            var result = await _users.FindAsync(u => u.Username == name);
             return await result.FirstOrDefaultAsync();
         }
 
         public UserData Find(string name)
         {
-            var result = _users.Find(u => u.Name == name);
+            var result = _users.Find(u => u.Username == name);
             var user = result.First();
             return user;
         }

@@ -1,8 +1,6 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.AspNetCore.Authorization;
@@ -11,8 +9,6 @@ using Microsoft.Extensions.Logging;
 using Moka.Server.Data;
 using Moka.Server.Events;
 using Moka.Server.Manager;
-using Moka.Server.Models;
-using UserModel = Moka.Server.Models.UserModel;
 
 namespace Moka.Server.Service
 {
@@ -50,21 +46,21 @@ namespace Moka.Server.Service
             
         }
 
-        public override async Task<RegisterResponse> Register(RegisterRequest request, ServerCallContext context)
-        {
-            _logger.LogInformation("registeing user {Name}", request.User.Nickname);
-            var res = await _userService.FindOrCreate(new UserModel(Guid.Empty, request.User.Nickname, request.Password,
-                DateTime.Now));
-            return await Task.FromResult(new RegisterResponse
-            {
-                Id = res.UserModel.Guid.ToString()
-            });
-        }
+        // public override async Task<RegisterResponse> Register(RegisterRequest request, ServerCallContext context)
+        // {
+        //     _logger.LogInformation("registeing user {Name}", request.User.Nickname);
+        //     var res = await _userService.FindOrCreate(new UserModel(Guid.Empty, request.User.Nickname, request.Password,
+        //         DateTime.Now));
+        //     return await Task.FromResult(new RegisterResponse
+        //     {
+        //         Id = res.UserModel.Guid.ToString()
+        //     });
+        // }
 
         public override async Task GetMessageStream(Empty _, IServerStreamWriter<Message> responseStream,
             ServerCallContext context)
         {
-            _logger.LogInformation("message stream user call: {Name}", _currentUser.Name);
+            _logger.LogInformation("message stream user call: {Name}", _currentUser.NickName);
             
             _userEvents.OnUserOnlined(
                 new UserOnlineEventArgs {StreamWriter = responseStream, User = _currentUser.ToUserModel()});

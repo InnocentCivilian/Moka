@@ -19,54 +19,66 @@ namespace Moka.Sdk
         private const string Address = "https://localhost:5001";
         private static string username = "";
         static Metadata? headers = null;
-
-        private static async Task<string> Authenticate()
-        {
-            Console.WriteLine($"Authenticating as {username}...");
-            var httpClient = new HttpClient();
-            var request = new HttpRequestMessage
-            {
-                RequestUri = new Uri($"{Address}/api/users/generateJwtToken?name={HttpUtility.UrlEncode(username)}"),
-                Method = HttpMethod.Get,
-                Version = new Version(2, 0)
-            };
-            var tokenResponse = await httpClient.SendAsync(request);
-            tokenResponse.EnsureSuccessStatusCode();
-
-            var token = await tokenResponse.Content.ReadAsStringAsync();
-            Console.WriteLine("Successfully authenticated.");
-
-            return token;
-        }
+        static string? token = null;
+        private static string password = "1234";
 
         static async Task Main(string[] args)
         {
-            string? token = null;
             var ar = args.FirstOrDefault();
             ar = ar.Split("=").Last();
-            username = "hahaha" + ar;
+            var me = new Me(
+                new User
+                {
+                    Id = Guid.Empty.ToString(),
+                    Nickname = ar + "name",
+                    Username = ar
+                }, 
+                password
+            );
+            Console.WriteLine("gRPC MOKA CLI Client");
+            Console.WriteLine();
+            Console.WriteLine("Press a key:");
+            Console.WriteLine("1: Register");
+            // Console.WriteLine("2: Purchase ticket");
+            // Console.WriteLine("3: Authenticate");
+            Console.WriteLine("4: Exit");
+            Console.WriteLine();
+            var exiting = false;
+            while (!exiting)
+            {
+                var consoleKeyInfo = Console.ReadKey(intercept: true);
+                switch (consoleKeyInfo.KeyChar)
+                {
+                    case '1':
+                        var resp =  await me.Register();
+                        Console.WriteLine("Register:"+resp);
+                        break;
+                    // case '2':
+                    //     await PurchaseTicket(client, token);
+                    //     break;
+                    // case '3':
+                    //     token = await Authenticate();
+                    //     break;
+                    case '4':
+                        exiting = true;
+                        break;
+                }
+            }
+
+            Console.WriteLine("Exiting");
+            return;
+            // var ar = args.FirstOrDefault();
+            // ar = ar.Split("=").Last();
+            // username = "hahaha" + ar;
             using var channel = GrpcChannel.ForAddress(Address);
             var client = new MokaMessenger.MokaMessengerClient(channel);
-            token = await Authenticate();
+            // token = await Authenticate();
             if (token != null)
             {
                 headers = new Metadata();
                 headers.Add("Authorization", $"Bearer {token}");
             }
-
-            // var metadata = new Metadata
-            // {
-            //     // { "Authorization", "hahaha"+ar }
-            //     {
-            //         "Authorization",
-            //         "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiaGFoYWhhdHdvIiwiZXhwIjoxNjA0NDEwNTcxLCJpc3MiOiJFeGFtcGxlU2VydmVyIiwiYXVkIjoiRXhhbXBsZUNsaWVudHMifQ.FcRUHwq_Pgl-JtvLCh5WdtPKwWgx_sh8pd82ssXJF8E"
-            //     }
-            // };
-            // CallOptions callOptions = new CallOptions(metadata);
-
-            // var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-
-            // using var streamingCall = client.GetMessageStream(new Empty(), headers:metadata,cancellationToken: cts.Token);
+            
             var streamingCall = client.GetMessageStream(new Empty(), headers: headers);
             if (ar == "one")
             {
