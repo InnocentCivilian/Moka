@@ -12,9 +12,15 @@ namespace Moka.Server.Auth
 {
     public interface ICustomAuthenticationManager
     {
-        string? ValidateToken(string token);
+        JwtValidationResult ValidateToken(string token);
     }
 
+    public class JwtValidationResult
+    {
+        public bool IsSuccess { get; set; }
+        public string Id { get; set; }
+        public string Mac { get; set; }
+    }
     public class CustomAuthenticationManager : ICustomAuthenticationManager
     {
         private readonly string tokenKey;
@@ -28,7 +34,7 @@ namespace Moka.Server.Auth
             this.myAudience = myAudience;
         }
 
-        public string ValidateToken(string token)
+        public JwtValidationResult ValidateToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var mySecurityKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(tokenKey));
@@ -46,11 +52,20 @@ namespace Moka.Server.Auth
                 }, out SecurityToken validatedToken);
                 Console.WriteLine("found identity"+validatedToken.Id);
                 Console.WriteLine("found identity"+u.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value);
-                return u.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
+                // return u.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
+                return new JwtValidationResult
+                {
+                    IsSuccess = true,
+                    Id = u.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value,
+                    Mac = u.Claims.First(x => x.Type == ClaimTypes.System).Value
+                };
             }
             catch
             {
-                return null;
+                return new JwtValidationResult
+                {
+                    IsSuccess = false
+                };
             }
         }
     }

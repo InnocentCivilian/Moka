@@ -22,15 +22,15 @@ namespace Moka.Server.Controller
         }
 
 
-        [HttpGet("generateJwtToken")]
-        public async Task<ActionResult> auth([FromQuery] string Name)
-        {
-            var user = await _userService.FindAsync(Name);
-            if (user == null)
-                return Unauthorized();
-            var token = _jwtAuthentication.GenerateToken(user.Id);
-            return Ok(token);
-        }
+        // [HttpGet("generateJwtToken")]
+        // public async Task<ActionResult> auth([FromQuery] string Name)
+        // {
+        //     var user = await _userService.FindAsync(Name);
+        //     if (user == null)
+        //         return Unauthorized();
+        //     var token = _jwtAuthentication.GenerateToken(user.Id);
+        //     return Ok(token);
+        // }
 
         // [HttpGet]
         // public async Task<ActionResult<User>>index()

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moka.Server.Service;
+using Moka.SharedKernel.Security;
 
 namespace Moka.Server.Auth
 {
@@ -50,6 +51,7 @@ namespace Moka.Server.Auth
             }
 
             string token = authorizationHeader.Substring("Bearer".Length).Trim();
+            string totp = Request.Headers["Totp"];
 
             if (string.IsNullOrEmpty(token))
             {
@@ -58,7 +60,7 @@ namespace Moka.Server.Auth
 
             try
             {
-                return validateToken(token);
+                return validateToken(token,totp);
             }
             catch (Exception ex)
             {
@@ -66,26 +68,36 @@ namespace Moka.Server.Auth
             }
         }
 
-        private AuthenticateResult validateToken(string token)
+        private AuthenticateResult validateToken(string token,string totp)
         {
             base.Logger.LogInformation("token:" + token);
-            var id = customAuthenticationManager.ValidateToken(token);
-            if (id == null)
+            var result = customAuthenticationManager.ValidateToken(token);
+            if (!result.IsSuccess)
             {
                 return AuthenticateResult.Fail("Unauthorized 4");
             }
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, id),
+                new Claim(ClaimTypes.NameIdentifier, result.Id),
+                new Claim(ClaimTypes.System, result.Mac),
             };
 
             var identity = new ClaimsIdentity(claims, Scheme.Name);
             var principal = new GenericPrincipal(identity, new[] {"user"});
             var ticket = new AuthenticationTicket(principal, Scheme.Name);
-            // var user = new GenericPrincipal(new ClaimsIdentity(id), new []{"user"});
-            // var ticket = new AuthenticationTicket(user, Scheme.Name);
-            return AuthenticateResult.Success(ticket);
+            var user = _userService.FindById(result.Id);
+            var device = user.Devices.FirstOrDefault(x => x.MacAddress == result.Mac);
+            if (device==null)
+            {
+                return AuthenticateResult.Fail("Unauthorized 5");
+            }
+
+            if (TotpHelper.Validate(TotpHelper.CalculateSecret(device.MacAddress,device.Salt,user.Guid.ToString()),totp,device.Salt))
+            {
+                return AuthenticateResult.Success(ticket);
+            }
+            return AuthenticateResult.Fail("Unauthorized 6");
         }
     }
 }

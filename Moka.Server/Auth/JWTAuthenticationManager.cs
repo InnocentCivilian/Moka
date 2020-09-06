@@ -9,7 +9,7 @@ namespace Moka.Server.Auth
 {
     public interface IJWTAuthenticationManager
     {
-        string GenerateToken(string name);
+        string GenerateToken(string name,string mac);
     }
 
     public class JWTAuthenticationManager : IJWTAuthenticationManager
@@ -26,7 +26,7 @@ namespace Moka.Server.Auth
             this.myAudience = myAudience;
         }
 
-        public string GenerateToken(string id)
+        public string GenerateToken(string id,string mac)
         {
             if (string.IsNullOrEmpty(id))
             {
@@ -39,7 +39,8 @@ namespace Moka.Server.Auth
             {
                 Subject = new ClaimsIdentity(new Claim[]
                 {
-                    new Claim(ClaimTypes.NameIdentifier, id)
+                    new Claim(ClaimTypes.NameIdentifier, id),
+                    new Claim(ClaimTypes.System, mac)
                 }),
                 Expires = DateTime.UtcNow.AddHours(10),
                 Issuer = myIssuer,

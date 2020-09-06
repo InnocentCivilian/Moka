@@ -42,7 +42,8 @@ namespace Moka.Server.Models
             return new UserModel(
                 Guid.Parse(user.Id),
                 user.Username,
-                new List<Device>()
+                new List<Device>(),
+                user.Nickname
             );
         }
 

@@ -32,14 +32,16 @@ namespace Moka.Sdk
                     Id = Guid.Empty.ToString(),
                     Nickname = ar + "name",
                     Username = ar
-                }, 
+                },
                 password
             );
             Console.WriteLine("gRPC MOKA CLI Client");
             Console.WriteLine();
             Console.WriteLine("Press a key:");
             Console.WriteLine("1: Register");
-            // Console.WriteLine("2: Purchase ticket");
+            Console.WriteLine("2: Login");
+            Console.WriteLine("3: Login(FAIL)");
+            Console.WriteLine("5: TOTP");
             // Console.WriteLine("3: Authenticate");
             Console.WriteLine("4: Exit");
             Console.WriteLine();
@@ -50,17 +52,25 @@ namespace Moka.Sdk
                 switch (consoleKeyInfo.KeyChar)
                 {
                     case '1':
-                        var resp =  await me.Register();
-                        Console.WriteLine("Register:"+resp);
+                        var registerResp = await me.Register();
+                        Console.WriteLine("Register:" + registerResp);
                         break;
-                    // case '2':
-                    //     await PurchaseTicket(client, token);
-                    //     break;
-                    // case '3':
-                    //     token = await Authenticate();
-                    //     break;
+                    case '2':
+                        me.Password = password;
+                        var loginResponse = await me.Login();
+                        Console.WriteLine("Login:" + loginResponse);
+                        break;
+                    case '3':
+                        me.Password = "failPASSWORDwrong";
+                        var failLoginResponse = await me.Login();
+                        Console.WriteLine("Login:" + failLoginResponse);
+                        break;
                     case '4':
                         exiting = true;
+                        break;
+                    case '5':
+                        var totp = me.CalculateTotp();
+                        Console.WriteLine("Totp:" + totp);
                         break;
                 }
             }
@@ -78,7 +88,7 @@ namespace Moka.Sdk
                 headers = new Metadata();
                 headers.Add("Authorization", $"Bearer {token}");
             }
-            
+
             var streamingCall = client.GetMessageStream(new Empty(), headers: headers);
             if (ar == "one")
             {

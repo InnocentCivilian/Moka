@@ -15,6 +15,7 @@ namespace Moka.Server.Service
         Task<UserData> FindAsync(string name);
         UserData Find(string name);
         UserData FindById(string id);
+        Task Update(UserData user);
     }
 
     public class UserService : IUserService
@@ -44,6 +45,7 @@ namespace Moka.Server.Service
             var result = await _users.FindAsync(u => u.Username == user.UserName || u.Guid == user.Guid);
             return await result.FirstOrDefaultAsync();
         }
+
         public async Task<UserData> FindAsync(string name)
         {
             var result = await _users.FindAsync(u => u.Username == name);
@@ -62,6 +64,12 @@ namespace Moka.Server.Service
             var result = _users.Find(u => u.Id == id);
             var user = result.First();
             return user;
+        }
+
+        public async Task Update(UserData user)
+        {
+            var filter = Builders<UserData>.Filter.Eq(u => u.Guid, user.Guid);
+            await _users.ReplaceOneAsync(filter, user);
         }
     }
 }

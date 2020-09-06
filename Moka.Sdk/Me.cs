@@ -1,9 +1,14 @@
 ﻿using System;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
+using Grpc.Core;
 using Grpc.Net.Client;
 using Moka.Sdk.Helper;
+using Moka.SharedKernel.Security;
 
 namespace Moka.Sdk
 {
@@ -16,13 +21,26 @@ namespace Moka.Sdk
         }
 
         public User User { get; set; }
-        
+
         public string Token { get; set; }
         public string Password { get; set; }
 
         public string Mac => MacAddress.GetDefaultMacAddress();
-            
+
         public string Salt { get; set; }
+        public string Totp { get; set; }
+
+        public Metadata headers
+        {
+            get
+            {
+                var h = new Metadata();
+                h.Add("Authorization", $"Bearer {Token}");
+                h.Add("Totp", CalculateTotp());
+                return h;
+            }
+        }
+
         // public  async Task<string> Login()
         // {
         //     Console.WriteLine($"Authenticating as {user.Username}...");
@@ -45,10 +63,52 @@ namespace Moka.Sdk
         public async Task<bool> Register()
         {
             var client = ServerConsts.UserClient;
-            var request = new RegisterRequest{MacAddress = Mac,Password = Password,User = User};
-            var response =  await client.RegisterAsync(request);
+            var request = new RegisterRequest {MacAddress = Mac, Password = Password, User = User};
+            var response = await client.RegisterAsync(request);
             return response.IsSuccess;
         }
 
+        public async Task<bool> Login()
+        {
+            var client = ServerConsts.UserClient;
+            var request = new LoginRequest {MacAddress = Mac, Password = Password, Username = User.Username};
+            var response = await client.LoginAsync(request);
+            if (!response.IsSuccess) return response.IsSuccess;
+            this.Salt = response.Salt;
+            this.Token = response.Token;
+            this.Totp = response.Totp;
+            this.User = response.User;
+            MessageStream();
+            return response.IsSuccess;
+        }
+
+        public string CalculateTotp()
+        {
+            var secret = TotpHelper.CalculateSecret(Mac, Salt, User.Id);
+            var totp = TotpHelper.Generate(secret, Salt);
+            // Console.WriteLine("totp valid:"+ TotpHelper.Validate(secret,totp,Salt));
+            return totp;
+        }
+
+        public async void MessageStream()
+        {
+            var client = ServerConsts.MessengerClient;
+            // token = await Authenticate();
+
+
+            var streamingCall = client.GetMessageStream(new Empty(), headers: headers);
+
+            try
+            {
+                await foreach (var messageData in streamingCall.ResponseStream.ReadAllAsync())
+                {
+                    Console.WriteLine($"{messageData.SenderId} | {messageData.Id} | {messageData.Payload} ");
+                }
+            }
+            catch (RpcException ex) when (ex.StatusCode == StatusCode.Cancelled)
+            {
+                Console.WriteLine("Stream cancelled.");
+            }
+        }
     }
 }
