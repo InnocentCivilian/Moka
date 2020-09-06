@@ -40,7 +40,7 @@ namespace Moka.Server.Auth
                 Subject = new ClaimsIdentity(new Claim[]
                 {
                     new Claim(ClaimTypes.NameIdentifier, id),
-                    new Claim(ClaimTypes.System, mac)
+                    new Claim(ClaimTypes.System, mac)//todo encrypt jwt
                 }),
                 Expires = DateTime.UtcNow.AddHours(10),
                 Issuer = myIssuer,
