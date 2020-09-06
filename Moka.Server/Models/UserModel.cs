@@ -39,6 +39,15 @@ namespace Moka.Server.Models
 
         public static UserModel FromUser(User user)
         {
+            if (string.IsNullOrEmpty(user.Id))
+            {
+                return new UserModel(
+                    Guid.Empty,
+                    user.Username,
+                    new List<Device>(),
+                    user.Nickname
+                );
+            }
             return new UserModel(
                 Guid.Parse(user.Id),
                 user.Username,

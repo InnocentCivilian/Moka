@@ -12,8 +12,9 @@ namespace Moka.Server.Service
     {
         Task<CreateUserResult> FindOrCreate(UserModel user);
         Task<UserData> FindAsync(UserModel user);
-        Task<UserData> FindAsync(string name);
+        Task<UserData> FindAsync(Guid Id);
         UserData Find(string name);
+        Task<UserData> FindByUsername(string name);
         UserData FindById(string id);
         Task Update(UserData user);
     }
@@ -46,9 +47,9 @@ namespace Moka.Server.Service
             return await result.FirstOrDefaultAsync();
         }
 
-        public async Task<UserData> FindAsync(string name)
+        public async Task<UserData> FindAsync(Guid Id)
         {
-            var result = await _users.FindAsync(u => u.Username == name);
+            var result = await _users.FindAsync(u => u.Guid == Id);
             return await result.FirstOrDefaultAsync();
         }
 
@@ -58,6 +59,11 @@ namespace Moka.Server.Service
             var user = result.First();
             return user;
         }
+
+        public async Task<UserData> FindByUsername(string name)
+        {
+            var result = await _users.FindAsync(u => u.Username == name);
+            return await result.FirstOrDefaultAsync();        }
 
         public UserData FindById(string id)
         {

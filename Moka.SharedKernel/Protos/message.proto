@@ -1,7 +1,8 @@
 ﻿syntax = "proto3";
+//package moka.kernel.message;
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-
+//import "moka.";
 service MokaMessenger{
   rpc GetMessageStream (google.protobuf.Empty) returns (stream Message);
   rpc SendMessage(Message) returns (Message);
@@ -27,7 +28,7 @@ message Message{
   string Id = 1;
   string localId = 2;
   string senderId = 3;
-  string receiverId = 4;
+  string ReceiverId = 4;
   bytes payload = 5;
   MessageType type = 6;
   google.protobuf.Timestamp created_at_TimeStamp = 7;

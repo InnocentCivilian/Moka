@@ -30,6 +30,8 @@ namespace Moka.Sdk
         public string Salt { get; set; }
         public string Totp { get; set; }
 
+        private User opposit => new User{Username = (User.Username == "one") ? "two" : "one"};
+
         public Metadata headers
         {
             get
@@ -86,15 +88,12 @@ namespace Moka.Sdk
         {
             var secret = TotpHelper.CalculateSecret(Mac, Salt, User.Id);
             var totp = TotpHelper.Generate(secret, Salt);
-            // Console.WriteLine("totp valid:"+ TotpHelper.Validate(secret,totp,Salt));
             return totp;
         }
 
         public async void MessageStream()
         {
             var client = ServerConsts.MessengerClient;
-            // token = await Authenticate();
-
 
             var streamingCall = client.GetMessageStream(new Empty(), headers: headers);
 
@@ -109,6 +108,37 @@ namespace Moka.Sdk
             {
                 Console.WriteLine("Stream cancelled.");
             }
+        }
+
+        public async Task<Message> SendMessage(Message message)
+        {
+            var client = ServerConsts.MessengerClient;
+
+            var resp = await client.SendMessageAsync(message
+                , headers: headers);
+
+            return resp;
+        }
+
+        public async Task<Message> SendMessageToOpposit()
+        {
+            var oppositUser = await FindUser(opposit);
+            var msg = new Message
+            {
+                LocalId = Guid.NewGuid().ToString(),
+                Payload = ByteString.CopyFrom("hiii", Encoding.UTF8), 
+                Type = MessageType.Text,
+                ReceiverId = oppositUser.User.Id,
+            };
+            var resp = await SendMessage(msg);
+            return resp;
+        }
+
+        public async Task<FindUserResult> FindUser(User user)
+        {
+            var client = ServerConsts.UserClient;
+            var resp = await client.GetUserInfoAsync(user);
+            return resp;
         }
     }
 }

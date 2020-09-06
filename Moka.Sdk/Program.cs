@@ -17,7 +17,8 @@ namespace Moka.Sdk
     class Program
     {
         private const string Address = "https://localhost:5001";
-        private static string username = "";
+
+        // private static string username = "";
         static Metadata? headers = null;
         static string? token = null;
         private static string password = "1234";
@@ -35,6 +36,8 @@ namespace Moka.Sdk
                 },
                 password
             );
+            Console.WriteLine("Username :  "+ me.User.Username);
+
             Console.WriteLine("gRPC MOKA CLI Client");
             Console.WriteLine();
             Console.WriteLine("Press a key:");
@@ -42,8 +45,8 @@ namespace Moka.Sdk
             Console.WriteLine("2: Login");
             Console.WriteLine("3: Login(FAIL)");
             Console.WriteLine("5: TOTP");
-            // Console.WriteLine("3: Authenticate");
-            Console.WriteLine("4: Exit");
+            Console.WriteLine("6: Send Message To opposit");
+            Console.WriteLine("0: Exit");
             Console.WriteLine();
             var exiting = false;
             while (!exiting)
@@ -65,12 +68,16 @@ namespace Moka.Sdk
                         var failLoginResponse = await me.Login();
                         Console.WriteLine("Login:" + failLoginResponse);
                         break;
-                    case '4':
-                        exiting = true;
-                        break;
                     case '5':
                         var totp = me.CalculateTotp();
                         Console.WriteLine("Totp:" + totp);
+                        break;
+                    case '6':
+                        var opstmsg = await me.SendMessageToOpposit();
+                        Console.WriteLine("message sent to "+ opstmsg.ReceiverId+" msg id ="+opstmsg.Id);
+                        break;
+                    case '0':
+                        exiting = true;
                         break;
                 }
             }

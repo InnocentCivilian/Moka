@@ -42,7 +42,7 @@ namespace Moka.Server.Service
 
         public override async Task<LoginResponse> Login(LoginRequest request, ServerCallContext context)
         {
-            var user = await _userService.FindAsync(request.Username);
+            var user = await _userService.FindByUsername(request.Username);
             if (user != null && request.Password.Equals(user.Password))
             {
                 var oldDevice = user.Devices.FirstOrDefault(x => x.MacAddress == request.MacAddress);
@@ -86,6 +86,24 @@ namespace Moka.Server.Service
             return new LoginResponse
             {
                 IsSuccess = false
+            };
+        }
+
+        public override async Task<FindUserResult> GetUserInfo(User request, ServerCallContext context)
+        {
+            _logger.LogInformation(request.ToString());
+            var user = await _userService.FindAsync(UserModel.FromUser(request));
+            if (user == null)
+            {
+                return new FindUserResult
+                {
+                    IsFound = false
+                };
+            }
+            return new FindUserResult
+            {
+                IsFound = true,
+                User = user.ToUserModel().ToUser()
             };
         }
     }

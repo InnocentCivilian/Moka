@@ -1,15 +1,21 @@
 ﻿syntax = "proto3";
+//package moka.kernel.user;
+
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-
 service MokaUser{
   rpc Register(RegisterRequest) returns (RegisterResponse);
   rpc Login(LoginRequest) returns (LoginResponse);
+  rpc GetUserInfo(User) returns (FindUserResult);
 }
 message LoginRequest{
   string username = 1;
   string password = 2;
   string macAddress = 3;
+}
+message FindUserResult{
+  bool IsFound = 1;
+  User user = 2;
 }
 message LoginResponse{
   bool isSuccess = 1;
@@ -32,5 +38,5 @@ message RegisterRequest{
 message RegisterResponse{
   bool isSuccess = 1;
   //some errors maybe todo
-//  string id = 2;
+  //  string id = 2;
 }

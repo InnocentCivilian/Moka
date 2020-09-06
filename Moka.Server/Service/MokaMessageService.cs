@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
@@ -76,7 +77,7 @@ namespace Moka.Server.Service
             ServerCallContext context)
         {
 
-            var reciever = await _userService.FindAsync(request.ReceiverId);
+            var reciever = await _userService.FindAsync(Guid.Parse(request.ReceiverId));
             request.SenderId = _currentUser.Guid.ToString();
             request.ReceiverId = reciever.Guid.ToString();
             var stored = await _messageService.Store(request);
