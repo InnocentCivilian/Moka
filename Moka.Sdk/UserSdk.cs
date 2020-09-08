@@ -2,6 +2,6 @@
 {
     public class UserSdk
     {
-        public Me me { get; set; }
+        public MeService MeService { get; set; }
     }
 }

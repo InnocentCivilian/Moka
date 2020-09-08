@@ -3,6 +3,8 @@ using System.Linq;
 using System.Reflection.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Moka.Sdk.Entity;
+using Moka.Sdk.Service;
 using Moka.Sdk.SqlLite;
 
 namespace Moka.Sdk.Extenstion
@@ -18,9 +20,8 @@ namespace Moka.Sdk.Extenstion
             });
             services.AddTransient<ConsoleMenu>();
 
-            services.AddSingleton<IDbConnection>(new DbConnection());
+            services.AddSingleton(new MokaClientContext(EnvConsts.DEFAULTDBFILE));
             var ar  = Environment.GetEnvironmentVariable("USER");
-            
             var me = new Me(
                 new User
                 {
@@ -30,7 +31,12 @@ namespace Moka.Sdk.Extenstion
                 },
                 EnvConsts.PASSWORD
             );
-            services.AddSingleton<IMe>(me);
+            services.AddSingleton(me);
+
+            services.AddSingleton<IMessageService,MessageService>();
+            services.AddSingleton<IUserService,UserService>();
+            
+            services.AddSingleton<IMeService,MeService>();
             
             return services;
         }

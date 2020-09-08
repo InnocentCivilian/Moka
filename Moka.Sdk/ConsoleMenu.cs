@@ -6,12 +6,12 @@ namespace Moka.Sdk
 {
     public class ConsoleMenu
     {
-        private IMe me { get; set; }
+        private IMeService MeService { get; set; }
         private ILogger<ConsoleMenu> _logger;
 
-        public ConsoleMenu(IMe me, ILogger<ConsoleMenu> logger)
+        public ConsoleMenu(IMeService meService, ILogger<ConsoleMenu> logger)
         {
-            this.me = me;
+            MeService = meService;
             _logger = logger;
             _logger.LogDebug("Moke Client Console Menu Running...");
 
@@ -19,7 +19,7 @@ namespace Moka.Sdk
 
         public async Task ShowMenu()
         {
-            _logger.LogDebug("Username :  "+ me.User.Username);
+            _logger.LogDebug("Username :  "+ MeService._me.User.Username);
 
             _logger.LogDebug("gRPC MOKA CLI Client");
             _logger.LogDebug("");
@@ -38,25 +38,25 @@ namespace Moka.Sdk
                 switch (consoleKeyInfo.KeyChar)
                 {
                     case '1':
-                        var registerResp = await me.Register();
+                        var registerResp = await MeService.Register();
                         _logger.LogDebug("Register:" + registerResp);
                         break;
                     case '2':
-                        me.Password = EnvConsts.PASSWORD;
-                        var loginResponse = await me.Login();
+                        MeService._me.Password = EnvConsts.PASSWORD;
+                        var loginResponse = await MeService.Login();
                         _logger.LogDebug("Login:" + loginResponse);
                         break;
                     case '3':
-                        me.Password = EnvConsts.WRONGPASSWORD;
-                        var failLoginResponse = await me.Login();
+                        MeService._me.Password = EnvConsts.WRONGPASSWORD;
+                        var failLoginResponse = await MeService.Login();
                         _logger.LogDebug("Login:" + failLoginResponse);
                         break;
                     case '5':
-                        var totp = me.CalculateTotp();
+                        var totp = MeService.CalculateTotp();
                         _logger.LogDebug("Totp:" + totp);
                         break;
                     case '6':
-                        var opstmsg = await me.SendMessageToOpposit();
+                        var opstmsg = await MeService.SendMessageToOpposit();
                         _logger.LogDebug("message sent to "+ opstmsg.ReceiverId+" msg id ="+opstmsg.Id);
                         break;
                     case '0':

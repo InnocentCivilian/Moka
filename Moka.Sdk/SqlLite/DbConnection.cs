@@ -12,12 +12,12 @@ namespace Moka.Sdk.SqlLite
     public class DbConnection : IDbConnection
     {
         const string newDatabaseFile = EnvConsts.DEFAULTDBFILE;
-        public readonly MokaClientContext db;
+        public readonly MokaClientContext _db;
 
         public DbConnection()
         {
-            db = new MokaClientContext(newDatabaseFile);
-            db.Database.EnsureCreated();
+            _db = new MokaClientContext(newDatabaseFile);
+            _db.Database.EnsureCreated();
         }
 
         // public static void Main(string[] args)
