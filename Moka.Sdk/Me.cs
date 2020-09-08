@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,11 +10,31 @@ using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Grpc.Net.Client;
 using Moka.Sdk.Helper;
+using Moka.Sdk.SqlLite;
 using Moka.SharedKernel.Security;
 
 namespace Moka.Sdk
 {
-    public class Me
+    public interface IMe
+    {
+        User User { get; set; }
+        string Token { get; set; }
+        string Password { get; set; }
+        string Mac { get; }
+        string Salt { get; set; }
+        string Totp { get; set; }
+        Metadata headers { get; }
+        Task<bool> Register();
+        Task<bool> Login();
+        string CalculateTotp();
+        void MessageStream();
+        Task<Message> SendMessage(Message message);
+        Task<Message> SendMessageToOpposit();
+        Task<FindUserResult> FindUser(User user);
+        void RunDb();
+    }
+
+    public class Me : IMe
     {
         public Me(User user, string password)
         {
@@ -30,7 +52,7 @@ namespace Moka.Sdk
         public string Salt { get; set; }
         public string Totp { get; set; }
 
-        private User opposit => new User{Username = (User.Username == "one") ? "two" : "one"};
+        private User opposit => new User {Username = (User.Username == "one") ? "two" : "one"};
 
         public Metadata headers
         {
@@ -42,25 +64,7 @@ namespace Moka.Sdk
                 return h;
             }
         }
-
-        // public  async Task<string> Login()
-        // {
-        //     Console.WriteLine($"Authenticating as {user.Username}...");
-        //     var httpClient = new HttpClient();
-        //     var request = new HttpRequestMessage
-        //     {
-        //         RequestUri = new Uri($"{ServerConsts.Address}/api/users/generateJwtToken?name={HttpUtility.UrlEncode(username)}"),
-        //         Method = HttpMethod.Get,
-        //         Version = new Version(2, 0)
-        //     };
-        //     var tokenResponse = await httpClient.SendAsync(request);
-        //     tokenResponse.EnsureSuccessStatusCode();
-        //
-        //     var token = await tokenResponse.Content.ReadAsStringAsync();
-        //     Console.WriteLine("Successfully authenticated.");
-        //
-        //     return token;
-        // }
+        
 
         public async Task<bool> Register()
         {
@@ -126,7 +130,7 @@ namespace Moka.Sdk
             var msg = new Message
             {
                 LocalId = Guid.NewGuid().ToString(),
-                Payload = ByteString.CopyFrom("hiii", Encoding.UTF8), 
+                Payload = ByteString.CopyFrom("hiii", Encoding.UTF8),
                 Type = MessageType.Text,
                 ReceiverId = oppositUser.User.Id,
             };
@@ -139,6 +143,49 @@ namespace Moka.Sdk
             var client = ServerConsts.UserClient;
             var resp = await client.GetUserInfoAsync(user);
             return resp;
+        }
+
+        public void RunDb()
+        {
+            // Tipp: SQLite Cipher databases can be created/explored manually using https://sqlitebrowser.org/ (or on GitHub https://github.com/sqlitebrowser/sqlitebrowser)
+            const string newDatabaseFile = EnvConsts.DEFAULTDBFILE;
+
+
+            // Initialize the database context (ensure the database is created, if it's a new database)
+            using var db = new MokaClientContext(newDatabaseFile);
+
+            db.Database.EnsureCreated();
+
+            // Add a blog URI
+            // db.Blogs.Add(new Blog { Url = "http://blogs.msdn.com/adonet" });
+            db.Messages.Add(new MessageLite
+            {
+                Created_at = DateTime.Now,
+                Data = new byte[] { },
+                Delivered_at = DateTime.Now,
+                From = Guid.Empty,
+                To = Guid.Empty,
+                LocalId = Guid.Empty,
+                MessageType = MessageType.Text
+            });
+            // db.Users.Add(
+            //     new User
+            //     {
+            //         Id = "123",
+            //         Nickname = "hahaha",
+            //         Username = "fuckme"
+            //     });
+            Console.WriteLine("{0} records saved to database", db.SaveChanges());
+            Console.WriteLine("{0} records are in message table", db.Messages.Count());
+            foreach (var messageLite in db.Messages)
+            {
+                Console.WriteLine(messageLite.Created_at);
+            }
+
+            //
+            // // Display all blog URIs from the current database
+            // Console.WriteLine("All {0} blogs in database:", db.Blogs.Count());
+            // foreach (var blog in db.Blogs) Console.WriteLine(" - #{0} {1}", blog.BlogId, blog.Url);
         }
     }
 }
