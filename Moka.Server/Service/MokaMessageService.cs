@@ -88,7 +88,7 @@ namespace Moka.Server.Service
 
         public override async Task<MessageArray> GetOfflineMessageStream(Empty request, ServerCallContext context)
         {
-            var messagesData = await _messageService.FindUserInboxMessages(_currentUser);
+            var messagesData = await _messageService.FindUserUndeliverdInboxMessages(_currentUser);
             var messages = messagesData.Select(x => x.ToMessage()).ToList();
             return await Task.FromResult(
                 new MessageArray

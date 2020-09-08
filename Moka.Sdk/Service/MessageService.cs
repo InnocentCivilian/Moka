@@ -27,11 +27,15 @@ namespace Moka.Sdk.Service
         {
             _logger.LogDebug("storing message");
             await _Context.Messages.AddAsync(message);
+            await _Context.SaveChangesAsync();
+
         }
         public async Task StoreMany(IEnumerable<MessageLite> messages)
         {
             _logger.LogDebug($"storing bunch of messages count {messages.Count()}");
             await _Context.Messages.AddRangeAsync(messages);
+            await _Context.SaveChangesAsync();
+
         }
     }
 }

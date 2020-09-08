@@ -14,7 +14,7 @@ namespace Moka.Server.Service
     {
         Task<MessageData> Store(Message message);
         Task<MessageData> Find(Message message);
-        Task<List<MessageData>> FindUserInboxMessages(UserData user);
+        Task<List<MessageData>> FindUserUndeliverdInboxMessages(UserData user);
         Task UpdateAck(UserModel user, MessageAck ack);
 
     }
@@ -31,9 +31,9 @@ namespace Moka.Server.Service
             var database = client.GetDatabase(settings.DatabaseName);
             _messages = database.GetCollection<MessageData>(settings.MessagesCollectionName);
         }
-        public async Task<List<MessageData>> FindUserInboxMessages(UserData user)
+        public async Task<List<MessageData>> FindUserUndeliverdInboxMessages(UserData user)
         {
-            var res = await _messages.FindAsync(m => m.To == user.Guid);
+            var res = await _messages.FindAsync(m => m.To == user.Guid & m.Delivered_at == DateTime.MinValue);
             return await res.ToListAsync();
         }
         public async Task<MessageData> Store(Message message)
@@ -63,7 +63,8 @@ namespace Moka.Server.Service
             switch (ack.AckType)
             {
                 case AckType.Deliver:
-                    var condDeliver = Builders<MessageData>.Filter.Eq("To", user.Guid.ToString()) & Builders<MessageData>.Filter.Eq("Delivered_at", default(DateTime));
+                    _logger.LogDebug($"updating act to ${ack.TimeStamp}");
+                    var condDeliver = Builders<MessageData>.Filter.Eq("To", user.Guid.ToString()) & Builders<MessageData>.Filter.Eq("Delivered_at", DateTime.MinValue);
                     var updateDeliver = Builders<MessageData>.Update.Set("Delivered_at", ack.TimeStamp.ToDateTime());
                     var result = await _messages.UpdateManyAsync(condDeliver,updateDeliver);
                     _logger.LogInformation("marked as delv: "+result.ModifiedCount);

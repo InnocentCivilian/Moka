@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -29,21 +30,24 @@ namespace Moka.Sdk
         void MessageStream();
         Task<Message> SendMessage(Message message);
         Task<Message> SendMessageToOpposit();
-        Task<FindUserResult> FindUser(User user);
+        Task<FindUserResult> FindUserAsync(User user);
         Task GetOfflineMessage();
+        Task SendDeliverAck(DateTime maxDateArrived);
     }
 
     public class MeService : IMeService
     {
-        public MeService(Me me, IMessageService messageService, ILogger<MeService> logger)
+        public MeService(Me me, IMessageService messageService, ILogger<MeService> logger, IUserService userService)
         {
             _me = me;
             _MessageService = messageService;
             _logger = logger;
+            _UserService = userService;
         }
 
         public ILogger<MeService> _logger;
         public IMessageService _MessageService;
+        public IUserService _UserService;
         public Me _me { get; set; }
 
         private User opposit => new User {Username = (_me.User.Username == "one") ? "two" : "one"};
@@ -58,7 +62,7 @@ namespace Moka.Sdk
                 return h;
             }
         }
-        
+
 
         public async Task<bool> Register()
         {
@@ -71,7 +75,8 @@ namespace Moka.Sdk
         public async Task<bool> Login()
         {
             var client = ServerConsts.UserClient;
-            var request = new LoginRequest {MacAddress = _me.Mac, Password = _me.Password, Username = _me.User.Username};
+            var request = new LoginRequest
+                {MacAddress = _me.Mac, Password = _me.Password, Username = _me.User.Username};
             var response = await client.LoginAsync(request);
             if (!response.IsSuccess) return response.IsSuccess;
             _me.Salt = response.Salt;
@@ -101,6 +106,7 @@ namespace Moka.Sdk
                 await foreach (var messageData in streamingCall.ResponseStream.ReadAllAsync())
                 {
                     Console.WriteLine($"{messageData.SenderId} | {messageData.Id} | {messageData.Payload} ");
+                    await StoreMessages(new List<MessageLite>() {messageData.ToMessageLite()});
                 }
             }
             catch (RpcException ex) when (ex.StatusCode == StatusCode.Cancelled)
@@ -121,7 +127,7 @@ namespace Moka.Sdk
 
         public async Task<Message> SendMessageToOpposit()
         {
-            var oppositUser = await FindUser(opposit);
+            var oppositUser = await FindUserAsync(opposit);
             var msg = new Message
             {
                 LocalId = Guid.NewGuid().ToString(),
@@ -133,7 +139,7 @@ namespace Moka.Sdk
             return resp;
         }
 
-        public async Task<FindUserResult> FindUser(User user)
+        public async Task<FindUserResult> FindUserAsync(User user)
         {
             var client = ServerConsts.UserClient;
             var resp = await client.GetUserInfoAsync(user);
@@ -144,7 +150,42 @@ namespace Moka.Sdk
         {
             var client = ServerConsts.MessengerClient;
             var messages = await client.GetOfflineMessageStreamAsync(new Empty(), headers: headers);
-            await _MessageService.StoreMany(messages.Messages.ToMessageLiteList());
+            await StoreMessages(messages.Messages.ToMessageLiteList());
+        }
+
+        public async Task StoreMessages(List<MessageLite> messages)
+        {
+            await _MessageService.StoreMany(messages);
+
+            var users = messages.Select(x => x.From).Distinct().ToList();
+            await UpdateContactList(users);
+            await SendDeliverAck(messages.Max(x => x.Created_at));
+        }
+
+        public async Task UpdateContactList(List<Guid> users)
+        {
+            var newUsers = _UserService.NewUsers(users);
+            newUsers.ForEach(async u => await AddUserToContact(u));
+        }
+
+        public async Task AddUserToContact(Guid id)
+        {
+            var result = await FindUserAsync(new User {Id = id.ToString()});
+            if (result.IsFound)
+            {
+                await _UserService.StoreAsync(result.User.ToUserLite());
+            }
+        }
+
+        public async Task SendDeliverAck(DateTime maxDateArrived)
+        {
+            _logger.LogDebug($"Sending ack for max Date:{maxDateArrived}");
+            var client = ServerConsts.MessengerClient;
+            await client.CumulativeAckAsync(new MessageAck
+            {
+                AckType = AckType.Deliver,
+                TimeStamp = Timestamp.FromDateTime(maxDateArrived)
+            },headers: headers);
         }
     }
 }
