@@ -1,6 +1,7 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -12,6 +13,7 @@ using Moka.Server.Data;
 using Moka.Server.Service;
 using Grpc.Core;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Http;
 using Moka.Server.Events;
 using Moka.Server.Helper;
@@ -61,7 +63,13 @@ namespace Moka.Server
 
             services.AddAuthentication("Basic")
                 .AddScheme<BasicAuthenticationOptions, CustomAuthenticationHandler>("Basic", null);
-
+            // services.AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme)
+            //     .AddCertificate(options =>
+            //     {
+            //         // Not recommended in production environments. The example is using a self-signed test certificate.
+            //         options.RevocationMode = X509RevocationMode.NoCheck;
+            //         options.AllowedCertificateTypes = CertificateTypes.SelfSigned;
+            //     });
             services.AddSingleton<ICustomAuthenticationManager>(new CustomAuthenticationManager(tokenKey,myIssuer,myAudience));
             services.AddHttpContextAccessor();
 

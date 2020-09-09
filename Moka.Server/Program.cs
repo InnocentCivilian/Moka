@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.Hosting;
 
 namespace Moka.Server
@@ -12,6 +13,16 @@ namespace Moka.Server
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder => { webBuilder.UseStartup<Startup>(); });
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    // webBuilder.ConfigureKestrel(kestrelOptions =>
+                    // {
+                    //     kestrelOptions.ConfigureHttpsDefaults(httpsOptions =>
+                    //     {
+                    //         httpsOptions.ClientCertificateMode = ClientCertificateMode.AllowCertificate;
+                    //     });
+                    // });
+                    webBuilder.UseStartup<Startup>();
+                });
     }
 }
