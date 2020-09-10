@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Moka.SharedKernel", "Moka.S
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Moka.Client.Windows", "Moka.Client.Windows\Moka.Client.Windows.csproj", "{06687588-C82E-4E7B-83C1-487CB9F91184}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Moka.SharedKernel.Tests", "Moka.SharedKernel.Tests\Moka.SharedKernel.Tests.csproj", "{FBD07EDF-FD02-4543-82A6-A2EFA3C8B3D3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{06687588-C82E-4E7B-83C1-487CB9F91184}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{06687588-C82E-4E7B-83C1-487CB9F91184}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{06687588-C82E-4E7B-83C1-487CB9F91184}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FBD07EDF-FD02-4543-82A6-A2EFA3C8B3D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBD07EDF-FD02-4543-82A6-A2EFA3C8B3D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBD07EDF-FD02-4543-82A6-A2EFA3C8B3D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBD07EDF-FD02-4543-82A6-A2EFA3C8B3D3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
