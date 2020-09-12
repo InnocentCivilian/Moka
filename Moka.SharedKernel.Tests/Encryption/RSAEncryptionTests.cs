@@ -1,31 +1,76 @@
 using Moka.Server.Helper;
 using Moka.SharedKernel.Encryption;
+using Moka.SharedKernel.Tests.Randoms;
 using Xunit;
 
 namespace Moka.SharedKernel.Tests.Encryption
 {
     public class RSAEncryptionTests
     {
-        [Fact]
-        public void CompareHast_FreshGeneratedAndStoredKey_Equal()
+        private IAsymmetricEncryption _sender;
+        private IAsymmetricEncryption _receiver;
+        private IAsymmetricEncryption _third;
+        private string senderName = "sender";
+        private string receiverName = "receiver";
+        private string thirdName = "third";
+
+        public RSAEncryptionTests()
         {
-            var uname = SecurityHelper.RandomString(6);
-            var key1 = RSAHandler.GetOrGenerateKeyPair(uname);
-            var key2 = RSAHandler.GetOrGenerateKeyPair(uname);
-            var hash1 = RSAHandler.GetAsymPrivateHash(key1);
-            var hash2 = RSAHandler.GetAsymPrivateHash(key2);
-            Assert.Equal(hash1,hash2);
+            _sender = new RSAEncryption(senderName);
+            _receiver = new RSAEncryption(receiverName);
+            _third = new RSAEncryption(thirdName);
         }
+
+        // [Fact]
+        // public void CompareHast_FreshGeneratedAndStoredKey_Equal()
+        // {
+        //     var uname = SecurityHelper.RandomString(6);
+        //     var key1 = RSAHandler.GetOrGenerateKeyPair(uname);
+        //     var key2 = RSAHandler.GetOrGenerateKeyPair(uname);
+        //     var hash1 = RSAHandler.GetAsymPrivateHash(key1);
+        //     var hash2 = RSAHandler.GetAsymPrivateHash(key2);
+        //     Assert.Equal(hash1,hash2);
+        // }
+        // [Fact]
+        // public void CompareHast_TwoDiffrentUsers_NotEqual()
+        // {
+        //     var uname1 = SecurityHelper.RandomString(6);
+        //     var uname2 = SecurityHelper.RandomString(6);
+        //     var key1 = RSAHandler.GetOrGenerateKeyPair(uname1);
+        //     var key2 = RSAHandler.GetOrGenerateKeyPair(uname2);
+        //     var hash1 = RSAHandler.GetAsymPrivateHash(key1);
+        //     var hash2 = RSAHandler.GetAsymPrivateHash(key2);
+        //     Assert.NotEqual(hash1,hash2);
+        // }
         [Fact]
-        public void CompareHast_TwoDiffrentUsers_NotEqual()
+        public void SameKey_EncryptSameData_DifferentCipher()
         {
-            var uname1 = SecurityHelper.RandomString(6);
-            var uname2 = SecurityHelper.RandomString(6);
-            var key1 = RSAHandler.GetOrGenerateKeyPair(uname1);
-            var key2 = RSAHandler.GetOrGenerateKeyPair(uname2);
-            var hash1 = RSAHandler.GetAsymPrivateHash(key1);
-            var hash2 = RSAHandler.GetAsymPrivateHash(key2);
-            Assert.NotEqual(hash1,hash2);
+            var plain = new RandomBufferGenerator(500).GenerateBufferFromSeed(200);
+            var rec = SecurityHelper.RandomString(6);
+            var keyres = RSAHandler.GetOrGenerateKeyPair(rec);
+            var cip1 = _sender.EncryptWithPublic(plain, keyres.Public);
+            var cip2 = _sender.EncryptWithPublic(plain, keyres.Public);
+            Assert.NotEqual(cip1, cip2);
+        }
+
+        [Fact]
+        public void SendAndRecieve()
+        {
+            var plain = new RandomBufferGenerator(500).GenerateBufferFromSeed(200);
+
+            var cipher = _sender.EncryptWithPublic(plain, _receiver.GetPublicKey());
+
+            var decrypted = _receiver.DecryptWithPrivate(cipher);
+            
+            Assert.Equal(plain,decrypted);
+            
+            // make and verify sign
+            var sign = _sender.Sign(plain);
+            
+            Assert.True(_receiver.ValidateSign(plain,sign,_sender.GetPublicKey()));
+            //just to make sure
+            Assert.False(_receiver.ValidateSign(plain,sign,_receiver.GetPublicKey()));
+            Assert.False(_receiver.ValidateSign(plain,sign,_third.GetPublicKey()));
         }
     }
 }
