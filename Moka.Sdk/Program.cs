@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Moka.Sdk.Entity;
 using Moka.Sdk.Extenstion;
 using Moka.SharedKernel.Encryption;
+using Moka.SharedKernel.Extenstion;
 using Moka.SharedKernel.Tests.Encryption;
 
 namespace Moka.Sdk

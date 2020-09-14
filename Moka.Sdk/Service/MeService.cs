@@ -16,6 +16,7 @@ using Moka.Sdk.Extenstion;
 using Moka.Sdk.Helper;
 using Moka.Sdk.Service;
 using Moka.Sdk.SqlLite;
+using Moka.SharedKernel.Encryption;
 using Moka.SharedKernel.Security;
 
 namespace Moka.Sdk
@@ -37,17 +38,21 @@ namespace Moka.Sdk
 
     public class MeService : IMeService
     {
-        public MeService(Me me, IMessageService messageService, ILogger<MeService> logger, IUserService userService)
+        public MeService(Me me, IMessageService messageService, ILogger<MeService> logger, IUserService userService, IHybridEncryption encryption)
         {
             _me = me;
             _MessageService = messageService;
             _logger = logger;
             _UserService = userService;
+            _Encryption = encryption;
+            // KeyStorage = keyStorage;
         }
 
         public ILogger<MeService> _logger;
         public IMessageService _MessageService;
         public IUserService _UserService;
+        public IHybridEncryption _Encryption;
+        // public IKeyStorage KeyStorage;
         public Me _me { get; set; }
 
         private User opposit => new User {Username = (_me.User.Username == "one") ? "two" : "one"};
@@ -117,6 +122,7 @@ namespace Moka.Sdk
 
         public async Task<Message> SendMessage(Message message)
         {
+            // _Encryption.EncryptData(message.ToByteArray(),)
             var client = ServerConsts.MessengerClient;
 
             var resp = await client.SendMessageAsync(message

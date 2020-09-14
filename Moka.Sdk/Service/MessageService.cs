@@ -32,9 +32,17 @@ namespace Moka.Sdk.Service
         }
         public async Task StoreMany(IEnumerable<MessageLite> messages)
         {
-            _logger.LogDebug($"storing bunch of messages count {messages.Count()}");
-            await _Context.Messages.AddRangeAsync(messages);
-            await _Context.SaveChangesAsync();
+            if (messages.Any())
+            {
+                _logger.LogDebug($"storing bunch of messages count {messages.Count()}");
+                await _Context.Messages.AddRangeAsync(messages);
+                await _Context.SaveChangesAsync();
+            }
+            else
+            {
+                _logger.LogDebug($"no offline message...");
+            }
+            
 
         }
     }

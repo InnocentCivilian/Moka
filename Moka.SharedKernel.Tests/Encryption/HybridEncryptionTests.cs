@@ -35,7 +35,7 @@ namespace Moka.SharedKernel.Tests.Encryption
         [Fact]
         public void SendAndRecieve()
         {
-            var data = Encoding.UTF8.GetBytes("out diry secret");
+            var data = Encoding.UTF8.GetBytes("our dirty secret");
             var encrypyed = _sender.EncryptData(data, _receiverAs.GetPublicKey());
 
             var decryped =

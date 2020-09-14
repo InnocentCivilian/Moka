@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Moka.Sdk.Entity;
 using Moka.Sdk.Service;
 using Moka.Sdk.SqlLite;
+using Moka.SharedKernel.Extenstion;
 
 namespace Moka.Sdk.Extenstion
 {
@@ -21,7 +22,7 @@ namespace Moka.Sdk.Extenstion
             services.AddTransient<ConsoleMenu>();
 
             services.AddSingleton(new MokaClientContext(EnvConsts.DEFAULTDBFILE));
-            var ar  = Environment.GetEnvironmentVariable("USER");
+            var ar = Environment.GetEnvironmentVariable("USER");
             var me = new Me(
                 new User
                 {
@@ -32,12 +33,13 @@ namespace Moka.Sdk.Extenstion
                 EnvConsts.PASSWORD
             );
             services.AddSingleton(me);
+            services.AddKernelExtensions(me.User.Username);
 
-            services.AddSingleton<IMessageService,MessageService>();
-            services.AddSingleton<IUserService,UserService>();
-            
-            services.AddSingleton<IMeService,MeService>();
-            
+            services.AddSingleton<IMessageService, MessageService>();
+            services.AddSingleton<IUserService, UserService>();
+
+            services.AddSingleton<IMeService, MeService>();
+
             return services;
         }
     }
