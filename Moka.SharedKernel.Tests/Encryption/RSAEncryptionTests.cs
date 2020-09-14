@@ -69,8 +69,11 @@ namespace Moka.SharedKernel.Tests.Encryption
             
             Assert.True(_receiver.ValidateSign(plain,sign,_sender.GetPublicKey()));
             //just to make sure
-            Assert.False(_receiver.ValidateSign(plain,sign,_receiver.GetPublicKey()));
+            Assert.False(_receiver.ValidateSign(plain, sign, _receiver.GetPublicKey()));
+                
             Assert.False(_receiver.ValidateSign(plain,sign,_third.GetPublicKey()));
+            
+            Assert.True(_sender.ValidateSign(plain,sign,_sender.GetPublicKey()));
         }
     }
 }

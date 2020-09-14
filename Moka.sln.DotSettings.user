@@ -2,6 +2,9 @@
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=4de8e8dd_002Db761_002D4b73_002Da898_002D9a685d6da43a/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="GenerateKey_NothingGiven_ReturnKey" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;Project Location="C:\Users\Hooman\RiderProjects\Moka\Moka.SharedKernel.Tests" Presentation="&amp;lt;Moka.SharedKernel.Tests&amp;gt;" /&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=a615d931_002D6c10_002D4cd7_002Da20f_002Db5fd9b909ea8/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="All tests from &amp;lt;Moka.SharedKernel.Tests&amp;gt;" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;Project Location="C:\Users\Hooman\RiderProjects\Moka\Moka.SharedKernel.Tests" Presentation="&amp;lt;Moka.SharedKernel.Tests&amp;gt;" /&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=e79d99d4_002D7a71_002D4245_002Db886_002D17edbd126701/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="Test1" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
     &lt;TestId&gt;xUnit::FBD07EDF-FD02-4543-82A6-A2EFA3C8B3D3::.NETCoreApp,Version=v3.1::Moka.SharedKernel.Tests.Encryption.RSAEncryptionTests&lt;/TestId&gt;&#xD;

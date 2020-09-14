@@ -25,7 +25,7 @@ namespace Moka.SharedKernel.Encryption
             // byte[] k = gen.GenerateKey(); // 256 bit key
             // return k;
         }
-        private int IVsize;
+        private int IVsize = ISymmetricEncryption.KEYSIZE / 8;
 
         private AesManaged GetCryptor()
         {
@@ -34,7 +34,6 @@ namespace Moka.SharedKernel.Encryption
             cryptor.Padding = PaddingMode.PKCS7;
             cryptor.KeySize = ISymmetricEncryption.KEYSIZE;
             cryptor.BlockSize = ISymmetricEncryption.KEYSIZE;
-            IVsize = ISymmetricEncryption.KEYSIZE / 8;
             return cryptor;
         }
 

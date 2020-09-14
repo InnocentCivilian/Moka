@@ -79,7 +79,27 @@ namespace Moka.SharedKernel.Encryption
             //
             // return sig;
         }
-
+        // public void PrintKeys(AsymmetricCipherKeyPair keyPair)
+        // {
+        //     using (TextWriter textWriter1 = new StringWriter())
+        //     {
+        //         var pemWriter1 = new PemWriter(textWriter1);
+        //         pemWriter1.WriteObject(keyPair.Private);
+        //         pemWriter1.Writer.Flush();
+        //
+        //         string privateKey = textWriter1.ToString();
+        //         Console.WriteLine(privateKey);
+        //     }
+        //
+        //     using (TextWriter textWriter2 = new StringWriter())
+        //     {
+        //         var pemWriter2 = new PemWriter(textWriter2);
+        //         pemWriter2.WriteObject(keyPair.Public);
+        //         pemWriter2.Writer.Flush();
+        //         string publicKey = textWriter2.ToString();
+        //         Console.WriteLine(publicKey);
+        //     }
+        // }
         public bool ValidateSign(byte[] data, byte[] sig, AsymmetricKeyParameter senderPublic)
         {
             ISigner signClientSide = SignerUtilities.GetSigner(PkcsObjectIdentifiers.Sha256WithRsaEncryption.Id);

@@ -1,9 +1,11 @@
-﻿namespace Moka.SharedKernel.Encryption
+﻿using Org.BouncyCastle.Crypto;
+
+namespace Moka.SharedKernel.Encryption
 {
     public interface IHybridEncryption
     {
-        public HybridEncryptionResult EncryptData(byte[] plain, byte[] receiverPublicKey);
-        public HybridDecryptionResult Decrypt(byte[] cipher,byte[] keyBox);
+        public HybridEncryptionResult EncryptData(byte[] plain, AsymmetricKeyParameter receiverPublicKey);
+        public HybridDecryptionResult DecryptData(byte[] cipher,byte[] keyBox,byte[] sign,AsymmetricKeyParameter senderPublicKey);
     }
 
     public class HybridDecryptionResult
@@ -17,7 +19,7 @@
     {
         public byte[] Cipher;
         public byte[] key;
-        public byte[] IV;
+        // public byte[] IV;
         public byte[] Sign;
     }
 }
