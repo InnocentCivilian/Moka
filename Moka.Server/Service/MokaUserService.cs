@@ -1,7 +1,11 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Security;
 using System.Threading.Tasks;
+using Google.Protobuf;
+using Google.Protobuf.Collections;
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using Moka.Server.Auth;
@@ -48,7 +52,7 @@ namespace Moka.Server.Service
                 var oldDevice = user.Devices.FirstOrDefault(x => x.MacAddress == request.MacAddress);
                 var salt = SecurityHelper.RandomString();
                 var totp = SecurityHelper.RandomString(256);
-                var token = _jwtAuthentication.GenerateToken(user.Id,request.MacAddress);
+                var token = _jwtAuthentication.GenerateToken(user.Id, request.MacAddress);
                 if (oldDevice == null)
                 {
                     user.Devices.Add(new Device(request.MacAddress,
@@ -100,11 +104,36 @@ namespace Moka.Server.Service
                     IsFound = false
                 };
             }
+
             return new FindUserResult
             {
                 IsFound = true,
                 User = user.ToUserModel().ToUser()
             };
+        }
+
+        public override async Task<Empty> Encrypted(EncryptedMessage request, ServerCallContext context)
+        {
+            var meta = new Meta();
+            meta.MergeFrom(request.Meta);
+            _logger.LogDebug($"type is ${meta.Map["type"]}");
+
+            if (meta.Map["type"] == "Message")
+            {
+                var msg = new Message();
+                msg.MergeFrom(request.Data.ToByteArray());
+            
+                _logger.LogDebug($"creating message from correct object ${msg.IsInitialized()}");
+                _logger.LogDebug($"{msg.Payload.ToStringUtf8()}");
+                
+            }
+            else
+            {
+                _logger.LogDebug($"not handler for object ${meta.Map["type"]}");
+            }
+
+            
+            return new Empty();
         }
     }
 }

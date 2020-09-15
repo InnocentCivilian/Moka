@@ -34,11 +34,14 @@ namespace Moka.Sdk
         Task<FindUserResult> FindUserAsync(User user);
         Task GetOfflineMessage();
         Task SendDeliverAck(DateTime maxDateArrived);
+        public Task SendBinary();
+
     }
 
     public class MeService : IMeService
     {
-        public MeService(Me me, IMessageService messageService, ILogger<MeService> logger, IUserService userService, IHybridEncryption encryption)
+        public MeService(Me me, IMessageService messageService, ILogger<MeService> logger, IUserService userService,
+            IHybridEncryption encryption)
         {
             _me = me;
             _MessageService = messageService;
@@ -51,7 +54,9 @@ namespace Moka.Sdk
         public ILogger<MeService> _logger;
         public IMessageService _MessageService;
         public IUserService _UserService;
+
         public IHybridEncryption _Encryption;
+
         // public IKeyStorage KeyStorage;
         public Me _me { get; set; }
 
@@ -191,7 +196,21 @@ namespace Moka.Sdk
             {
                 AckType = AckType.Deliver,
                 TimeStamp = Timestamp.FromDateTime(maxDateArrived)
-            },headers: headers);
+            }, headers: headers);
+        }
+
+        public async Task SendBinary()
+        {
+            var meta = new Meta { };
+            meta.Map.Add("type","Messageee");
+            var client = ServerConsts.UserClient;
+            var msg = new Message
+            {
+                
+                Payload = ByteString.CopyFromUtf8("hey BS")
+            }.ToByteString();
+
+            await client.EncryptedAsync(new EncryptedMessage{Data = msg,Meta = meta.ToByteString()});
         }
     }
 }
