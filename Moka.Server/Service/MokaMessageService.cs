@@ -3,6 +3,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.AspNetCore.Authorization;
@@ -110,6 +111,12 @@ namespace Moka.Server.Service
 
         public override async Task<Empty> Encrypted(EncryptedMessage request, ServerCallContext context)
         {
+            var sign = context.RequestHeaders.First(x => x.Key == "clientpacketsign-bin").ValueBytes;
+            _logger.LogDebug($"Packet sign is {sign}");
+            _logger.LogDebug(
+                $"packet sign validate {AsymmetricEncryption.ValidateSign(request.ToByteArray(), sign, AsymmetricEncryption.GetKey(_currentUser.Username))}"
+            );
+            _logger.LogDebug($"sign size : {sign.Length}");
             if (request.Receiver.Equals("SERVER"))
             {
                 var decrypted = HybridEncryption.DecryptData(

@@ -73,6 +73,14 @@ namespace Moka.Sdk
             }
         }
 
+        public Metadata MakeHeaders(byte[] content)
+        {
+            var headers = this.headers;
+            var signBinary = AsymmetricEncryption.Sign( content);
+            headers.Add("clientpacketsign-bin", signBinary);
+            return headers;
+        }
+
 
         public async Task<bool> Register()
         {
@@ -213,8 +221,7 @@ namespace Moka.Sdk
                 Sign = ByteString.CopyFrom(cipher.Sign),
                 Key = ByteString.CopyFrom(cipher.key),
             };
-            await client.EncryptedAsync(enc,headers: headers);
+            await client.EncryptedAsync(enc, headers: MakeHeaders(enc.ToByteArray()));
+        }
     }
-}
-
 }
