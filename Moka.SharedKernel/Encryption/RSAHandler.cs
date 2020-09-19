@@ -13,6 +13,8 @@ using Org.BouncyCastle.Security;
 
 namespace Moka.SharedKernel.Encryption
 {
+    [Obsolete("class is deprecated, please use alternate instead.", true)]
+
     public class RSAHandler
     {
         public const int keySize = 2048;
@@ -20,8 +22,8 @@ namespace Moka.SharedKernel.Encryption
         {
             //Generate a public/private key pair.  
             RSA rsa = RSA.Create();
-            KeyStorage.WriteToFile(owner, rsa.ExportRSAPrivateKey(), KeyStorage.KeyTypes.AsymmetricPrivate);
-            KeyStorage.WriteToFile(owner, rsa.ExportRSAPublicKey(), KeyStorage.KeyTypes.AsymmetricPublic);
+            PlainFileKeyStorage.WriteToFile(owner, rsa.ExportRSAPrivateKey(), PlainFileKeyStorage.KeyTypes.AsymmetricPrivate);
+            PlainFileKeyStorage.WriteToFile(owner, rsa.ExportRSAPublicKey(), PlainFileKeyStorage.KeyTypes.AsymmetricPublic);
             return rsa;
         }
 

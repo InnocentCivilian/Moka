@@ -1,32 +1,72 @@
 ﻿using System;
-using System.IO;
-using System.Security.Cryptography;
-using System.Text;
+using Moka.SharedKernel.Security;
 using Org.BouncyCastle.Asn1.Pkcs;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Encodings;
 using Org.BouncyCastle.Crypto.Engines;
+using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Security;
-using Org.BouncyCastle.Utilities.IO.Pem;
-using PemReader = Org.BouncyCastle.OpenSsl.PemReader;
 
 namespace Moka.SharedKernel.Encryption
 {
     public class RSAEncryption : IAsymmetricEncryption
     {
-        public RSAEncryption(string owner)
+        public const int keySize = 2048;
+
+        private IKeyStorage KeyStorage;
+        public RSAEncryption(string owner,Password password = default)
         {
             Owner = owner;
-            // RSACryptoServiceProvider csp = new RSACryptoServiceProvider(); // cspParams);
-            key = RSAHandler.GetOrGenerateKeyPair(owner);
-            // RSAParameters rsaParams = DotNetUtilities.ToRSAParameters((RsaPrivateCrtKeyParameters) key.Private);
-            // csp.ImportParameters(rsaParams);
+            KeyStorage = new PlainFileKeyStorage(owner);
+            if (KeyStorage.IsPrivateKeyExist())
+            {
+                key = KeyStorage.LoadPrivateKey(password);//todo : password
+            }
+            else
+            {
+                var k = GenerateKey();
+                KeyStorage.StorePrivateKey(k,password);
+                key = KeyStorage.LoadPrivateKey(password);
+            }
         }
 
         public AsymmetricKeyParameter GetPublicKey()
         {
             return key.Public;
+        }
+        public AsymmetricCipherKeyPair GetPrivateKey()
+        {
+            return key;
+        }
+
+        public AsymmetricCipherKeyPair GenerateKey()
+        {
+            RsaKeyPairGenerator rsaKeyPairGenerator = new RsaKeyPairGenerator();
+            rsaKeyPairGenerator.Init(new KeyGenerationParameters(new SecureRandom(), keySize));
+            AsymmetricCipherKeyPair keyPair = rsaKeyPairGenerator.GenerateKeyPair();
+            return keyPair;
+        }
+
+        public void AddToKeyRing(AsymmetricKeyParameter newKey, string owner)
+        {
+            if (KeyStorage.IsPublicKeyExist(owner))
+            {
+                throw new Exception(" key already exists");
+            }
+            RsaKeyParameters publickey = (RsaKeyParameters) newKey;
+
+            KeyStorage.StorePublicKey(publickey,owner);
+        }
+
+        public AsymmetricKeyParameter GetKey(string owner)
+        {
+            if (!KeyStorage.IsPublicKeyExist(owner))
+            {
+                throw new Exception("key not found in key ring");
+            }
+
+            return KeyStorage.LoadPublicKey(owner);
         }
 
         private AsymmetricCipherKeyPair key;

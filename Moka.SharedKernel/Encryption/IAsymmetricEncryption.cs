@@ -13,5 +13,10 @@ namespace Moka.SharedKernel.Encryption
         public bool ValidateSign(byte[] data,byte[] sig,AsymmetricKeyParameter senderPublic);
         public byte[] MakeHash(byte[] data);
         public AsymmetricKeyParameter GetPublicKey();
+        AsymmetricCipherKeyPair GetPrivateKey();
+        public AsymmetricCipherKeyPair GenerateKey();
+        public void AddToKeyRing(AsymmetricKeyParameter newKey,string owner);
+
+        public AsymmetricKeyParameter GetKey(string owner);
     }
 }

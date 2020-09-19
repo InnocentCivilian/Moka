@@ -1,3 +1,4 @@
+using System;
 using Moka.Server.Helper;
 using Moka.SharedKernel.Encryption;
 using Moka.SharedKernel.Tests.Randoms;
@@ -47,7 +48,7 @@ namespace Moka.SharedKernel.Tests.Encryption
         {
             var plain = new RandomBufferGenerator(500).GenerateBufferFromSeed(200);
             var rec = SecurityHelper.RandomString(6);
-            var keyres = RSAHandler.GetOrGenerateKeyPair(rec);
+            var keyres = new RSAEncryption(senderName).GenerateKey();
             var cip1 = _sender.EncryptWithPublic(plain, keyres.Public);
             var cip2 = _sender.EncryptWithPublic(plain, keyres.Public);
             Assert.NotEqual(cip1, cip2);
@@ -74,6 +75,19 @@ namespace Moka.SharedKernel.Tests.Encryption
             Assert.False(_receiver.ValidateSign(plain,sign,_third.GetPublicKey()));
             
             Assert.True(_sender.ValidateSign(plain,sign,_sender.GetPublicKey()));
+        }
+        ///////////////////////////////////////////////STORAGE KEYS//////////////////////////////////////////////////////
+        [Fact]
+        public void StorageTests()
+        {
+            var secondLoad = new RSAEncryption(senderName);
+            Assert.Equal(_sender.GetPrivateKey().Private.ToString(),secondLoad.GetPrivateKey().Private.ToString());
+            Assert.Throws<Exception>(() => _sender.GetKey(thirdName));
+            _sender.AddToKeyRing(_third.GetPublicKey(),thirdName);
+            
+            var key = _sender.GetKey(thirdName);
+            
+            Assert.False(key.IsPrivate);
         }
     }
 }

@@ -13,5 +13,10 @@
         {
             return Passphrase.Equals(other.Passphrase);
         }
+
+        public override string ToString()
+        {
+            return Passphrase;
+        }
     }
 }
