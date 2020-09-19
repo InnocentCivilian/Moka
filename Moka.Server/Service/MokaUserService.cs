@@ -112,28 +112,31 @@ namespace Moka.Server.Service
             };
         }
 
-        public override async Task<Empty> Encrypted(EncryptedMessage request, ServerCallContext context)
-        {
-            var meta = new Meta();
-            meta.MergeFrom(request.Meta);
-            _logger.LogDebug($"type is ${meta.Map["type"]}");
-
-            if (meta.Map["type"] == "Message")
-            {
-                var msg = new Message();
-                msg.MergeFrom(request.Data.ToByteArray());
-            
-                _logger.LogDebug($"creating message from correct object ${msg.IsInitialized()}");
-                _logger.LogDebug($"{msg.Payload.ToStringUtf8()}");
-                
-            }
-            else
-            {
-                _logger.LogDebug($"not handler for object ${meta.Map["type"]}");
-            }
-
-            
-            return new Empty();
-        }
+        // public override async Task<Empty> Encrypted(EncryptedMessage request, ServerCallContext context)
+        // {
+        //     var meta = new Meta();
+        //     meta.MergeFrom(request.Meta);
+        //     _logger.LogDebug($"type is ${meta.Map["type"]}");
+        //
+        //     if (meta.Map["type"] == "Message")
+        //     {
+        //         var msg = new Message();
+        //         msg.MergeFrom(request.Data.ToByteArray());
+        //     
+        //         _logger.LogDebug($"creating message from correct object ${msg.IsInitialized()}");
+        //         _logger.LogDebug($"{msg.Payload.ToStringUtf8()}");
+        //         
+        //     }
+        //     else
+        //     {
+        //         _logger.LogDebug($"not handler for object ${meta.Map["type"]}");
+        //     }
+        //     return new Empty();
+        // }
+        // public override async Task<Empty> Encrypted(EncryptedMessage request, ServerCallContext context)
+        // {
+        //     
+        //     return new Empty();
+        // }
     }
 }

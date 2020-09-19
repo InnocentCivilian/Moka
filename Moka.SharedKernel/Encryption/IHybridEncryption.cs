@@ -13,6 +13,10 @@ namespace Moka.SharedKernel.Encryption
         public bool IsSuccess;
         public bool IsSignValid;
         public byte[] data;
+        public override string ToString()
+        {
+            return base.ToString();
+        }
     }
 
     public class HybridEncryptionResult

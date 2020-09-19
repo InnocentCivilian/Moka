@@ -7,13 +7,8 @@ service MokaUser{
   rpc Register(RegisterRequest) returns (RegisterResponse);
   rpc Login(LoginRequest) returns (LoginResponse);
   rpc GetUserInfo(User) returns (FindUserResult);
-  rpc Encrypted(EncryptedMessage) returns(google.protobuf.Empty);
 }
-message EncryptedMessage{
-  bytes data = 1;
-  bytes meta = 2;
 
-}
 message Meta{
   map<string, string> map = 1;
 }

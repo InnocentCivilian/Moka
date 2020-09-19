@@ -50,8 +50,8 @@ namespace Moka.Server.Auth
                     ValidAudience = myAudience,
                     IssuerSigningKey = mySecurityKey
                 }, out SecurityToken validatedToken);
-                Console.WriteLine("found identity"+validatedToken.Id);
-                Console.WriteLine("found identity"+u.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value);
+                // Console.WriteLine("found identity"+validatedToken.Id);
+                // Console.WriteLine("found identity"+u.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value);
                 // return u.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
                 return new JwtValidationResult
                 {

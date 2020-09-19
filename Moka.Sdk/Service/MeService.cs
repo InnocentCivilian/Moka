@@ -34,21 +34,20 @@ namespace Moka.Sdk
         Task<FindUserResult> FindUserAsync(User user);
         Task GetOfflineMessage();
         Task SendDeliverAck(DateTime maxDateArrived);
-        public Task SendBinary();
-
+        public Task SendEncrypted();
     }
 
     public class MeService : IMeService
     {
         public MeService(Me me, IMessageService messageService, ILogger<MeService> logger, IUserService userService,
-            IHybridEncryption encryption)
+            IHybridEncryption encryption, IAsymmetricEncryption asymmetricEncryption)
         {
             _me = me;
             _MessageService = messageService;
             _logger = logger;
             _UserService = userService;
             _Encryption = encryption;
-            // KeyStorage = keyStorage;
+            AsymmetricEncryption = asymmetricEncryption;
         }
 
         public ILogger<MeService> _logger;
@@ -56,6 +55,7 @@ namespace Moka.Sdk
         public IUserService _UserService;
 
         public IHybridEncryption _Encryption;
+        public IAsymmetricEncryption AsymmetricEncryption;
 
         // public IKeyStorage KeyStorage;
         public Me _me { get; set; }
@@ -199,18 +199,22 @@ namespace Moka.Sdk
             }, headers: headers);
         }
 
-        public async Task SendBinary()
+        public async Task SendEncrypted()
         {
-            var meta = new Meta { };
-            meta.Map.Add("type","Messageee");
-            var client = ServerConsts.UserClient;
-            var msg = new Message
+            var client = ServerConsts.MessengerClient;
+            var cipher = _Encryption.EncryptData(
+                Encoding.UTF8.GetBytes("hi secrect server"),
+                AsymmetricEncryption.GetKey("SERVER")
+            );
+            var enc = new EncryptedMessage
             {
-                
-                Payload = ByteString.CopyFromUtf8("hey BS")
-            }.ToByteString();
-
-            await client.EncryptedAsync(new EncryptedMessage{Data = msg,Meta = meta.ToByteString()});
-        }
+                Cipher = ByteString.CopyFrom(cipher.Cipher),
+                Receiver = "SERVER",
+                Sign = ByteString.CopyFrom(cipher.Sign),
+                Key = ByteString.CopyFrom(cipher.key),
+            };
+            await client.EncryptedAsync(enc,headers: headers);
     }
+}
+
 }

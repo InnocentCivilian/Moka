@@ -29,7 +29,7 @@ namespace Moka.Sdk
             _logger.LogDebug("3: Login(FAIL)");
             _logger.LogDebug("5: TOTP");
             _logger.LogDebug("6: Send Message To opposit");
-            _logger.LogDebug("7: Send Binary");
+            _logger.LogDebug("7: Send Encrypted");
             _logger.LogDebug("0: Exit");
             _logger.LogDebug("");
             var exiting = false;
@@ -61,8 +61,8 @@ namespace Moka.Sdk
                         _logger.LogDebug("message sent to "+ opstmsg.ReceiverId+" msg id ="+opstmsg.Id);
                         break;
                     case '7':
-                        await MeService.SendBinary();
-                        _logger.LogDebug("binary sent");
+                        await MeService.SendEncrypted();
+                        _logger.LogDebug("encrypted sent");
                         break;
                     case '0':
                         exiting = true;

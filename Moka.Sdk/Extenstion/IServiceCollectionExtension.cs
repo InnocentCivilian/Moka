@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Moka.Sdk.Entity;
 using Moka.Sdk.Service;
 using Moka.Sdk.SqlLite;
+using Moka.SharedKernel.Encryption;
 using Moka.SharedKernel.Extenstion;
 
 namespace Moka.Sdk.Extenstion
@@ -34,6 +35,10 @@ namespace Moka.Sdk.Extenstion
             );
             services.AddSingleton(me);
             services.AddKernelExtensions(me.User.Username);
+            
+            services.AddSingleton<IAsymmetricEncryption>(new RSAEncryption(ar));
+            services.AddSingleton<ISymmetricEncryption>(new AesEncryption());
+            services.AddSingleton<IHybridEncryption, HybridEncryption>();
 
             services.AddSingleton<IMessageService, MessageService>();
             services.AddSingleton<IUserService, UserService>();

@@ -21,6 +21,7 @@ using Moka.Server.Manager;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Moka.Server.Auth;
+using Moka.SharedKernel.Encryption;
 
 namespace Moka.Server
 {
@@ -44,7 +45,10 @@ namespace Moka.Server
             services.AddSingleton<UserEvents>();
             services.AddSingleton<MessageEvents>();
             services.AddSingleton<OnlineUsersManager>();
-
+            
+            services.AddSingleton<IAsymmetricEncryption>(new RSAEncryption("SERVER"));
+            services.AddSingleton<ISymmetricEncryption>(new AesEncryption());
+            services.AddSingleton<IHybridEncryption, HybridEncryption>();
             services.AddSingleton<IMokaDataBaseSettings>(sp =>
                 sp.GetRequiredService<IOptions<MokaDataBaseSettings>>().Value);
 

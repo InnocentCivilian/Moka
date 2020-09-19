@@ -8,6 +8,13 @@ service MokaMessenger{
   rpc SendMessage(Message) returns (Message);
   rpc GetOfflineMessageStream (google.protobuf.Empty) returns (MessageArray);
   rpc CumulativeAck(MessageAck) returns (google.protobuf.Empty);
+  rpc Encrypted(EncryptedMessage) returns(google.protobuf.Empty);
+}
+message EncryptedMessage{
+  bytes cipher = 1;
+  bytes key = 2;
+  bytes sign = 3;
+  string receiver = 4;
 }
 message MessageAck{
   google.protobuf.Timestamp TimeStamp = 1;
