@@ -72,7 +72,7 @@ namespace Moka.SharedKernel.Encryption
             return new SignedKeyObject
             {
                 Payload = payload,
-                Sign = Encoding.UTF8.GetString(sign),
+                Sign = Convert.ToBase64String(sign),
                 Hash = ComputeSha256Hash(payload)
             };
         }

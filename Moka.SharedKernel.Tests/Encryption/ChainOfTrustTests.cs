@@ -70,7 +70,7 @@ namespace Moka.SharedKernel.Tests.Encryption
             Assert.Equal(objfirst.Payload, objsecond.Payload);
             Assert.Equal(objfirst.Sign, objsecond.Sign);
             
-            var reByteSign = Encoding.UTF8.GetBytes(objfirst.Sign);
+            var reByteSign = Convert.FromBase64String(objfirst.Sign);
             
             Assert.Equal(rootSign, reByteSign);//fail
 
