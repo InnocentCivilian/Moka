@@ -31,6 +31,15 @@ namespace Moka.SharedKernel.Encryption
         public string Payload { get; set; }
         public string Sign { get; set; }
         public string Hash { get; set; }
+
+        public string ToJson()
+        {
+            return ChainOfTrust.ConvertBody(this);
+        }
+        public static SignedKeyObject FromJson(string json)
+        {
+            return JsonConvert.DeserializeObject<SignedKeyObject>(json);
+        }
     }
 
     public class ChainOfTrust
@@ -46,7 +55,7 @@ namespace Moka.SharedKernel.Encryption
             _keyStorage = new PlainFileKeyStorage();
         }
 
-        private string ConvertBody(object model)
+        public static string ConvertBody(object model)
         {
             return JsonConvert.SerializeObject(model);
             // return Encoding.UTF8.GetBytes();
@@ -57,21 +66,21 @@ namespace Moka.SharedKernel.Encryption
             _trustedRoots.Add(parameter);
         }
 
-        public string SignedKeyParametersPair(AsymmetricKeyParameter key, SignKeyParameters parameters, byte[] sign)
+        public SignedKeyObject SignedKeyParametersPair(AsymmetricKeyParameter key, SignKeyParameters parameters, byte[] sign)
         {
             var payload = KeyParametersPair(key, parameters);
-            return ConvertBody(new SignedKeyObject
+            return new SignedKeyObject
             {
                 Payload = payload,
                 Sign = Convert.ToBase64String(sign),
                 Hash = ComputeSha256Hash(payload)
-            });
+            };
         }
 
-        public SignedKeyObject DeserializeSignedObject(string json)
-        {
-            return JsonConvert.DeserializeObject<SignedKeyObject>(json);
-        }
+        // public SignedKeyObject DeserializeSignedObject(string json)
+        // {
+        //     return JsonConvert.DeserializeObject<SignedKeyObject>(json);
+        // }
 
         public string KeyParametersPair(AsymmetricKeyParameter key, SignKeyParameters parameters)
         {

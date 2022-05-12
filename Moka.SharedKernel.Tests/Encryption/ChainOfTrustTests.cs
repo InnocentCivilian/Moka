@@ -53,10 +53,10 @@ namespace Moka.SharedKernel.Tests.Encryption
         {
 
             var rootSign = _chainOfTrust.SignHash(_rootPublic, _rootParams);
-            var json = _chainOfTrust.SignedKeyParametersPair(_rootPublic, _rootParams,rootSign);
-            output.WriteLine(json);
+            var signedKeyObject = _chainOfTrust.SignedKeyParametersPair(_rootPublic, _rootParams,rootSign);
+            output.WriteLine(signedKeyObject.ToJson());
             Assert.NotEmpty(rootSign);
-            Assert.NotEmpty(json);
+            Assert.NotEmpty(signedKeyObject.ToJson());
         }
         [Fact]
         public void RootSelfSign_KeyGiven_SelfSigns_ValidatePass()
@@ -65,7 +65,7 @@ namespace Moka.SharedKernel.Tests.Encryption
             var json = _chainOfTrust.SignedKeyParametersPair(_rootPublic, _rootParams,rootSign);
             var firstJson = _chainOfTrust.KeyParametersPair(_rootPublic, _rootParams);
 
-            var obj = _chainOfTrust.DeserializeSignedObject(json);
+            var obj = SignedKeyObject.FromJson(json.ToJson());
             Assert.Equal(obj.Payload,firstJson);
             Assert.NotEmpty(obj.Payload);
             Assert.NotEmpty(obj.Sign);
