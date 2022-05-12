@@ -16,6 +16,8 @@ namespace Moka.SharedKernel.Encryption
         public void StorePrivateKey(AsymmetricCipherKeyPair keyPair, Password password);
 
         public void StorePublicKey(RsaKeyParameters publickey, string owner);
+
+        string StringifyPublicKey(RsaKeyParameters publickey);
         //
         // public bool RemovePublicKey(string owner);
         //
@@ -47,6 +49,10 @@ namespace Moka.SharedKernel.Encryption
         }
 
         private string _owner;
+
+        public PlainFileKeyStorage()
+        {
+        }
 
         public PlainFileKeyStorage(string owner)
         {
@@ -87,7 +93,8 @@ namespace Moka.SharedKernel.Encryption
                 PemReader pr = new PemReader(new StringReader(key));
                 AsymmetricKeyParameter KeyPair = (AsymmetricKeyParameter) pr.ReadObject();
                 return KeyPair;
-            } 
+            }
+
             throw new FileNotFoundException();
         }
 
@@ -119,19 +126,24 @@ namespace Moka.SharedKernel.Encryption
             StoreToFile(print_privatekey, _owner, KeyTypes.AsymmetricPrivate, password);
         }
 
-        public void StorePublicKey(RsaKeyParameters publickey, string owner)
+        public string StringifyPublicKey(RsaKeyParameters publickey)
         {
             TextWriter textWriter1 = new StringWriter();
             PemWriter pemWriter1 = new PemWriter(textWriter1);
             pemWriter1.WriteObject(publickey);
             pemWriter1.Writer.Flush();
-            string print_publickey = textWriter1.ToString();
+            return textWriter1.ToString();
+        }
+
+        public void StorePublicKey(RsaKeyParameters publickey, string owner)
+        {
+            var print_publickey = StringifyPublicKey(publickey);
             StoreToFile(print_publickey, owner, KeyTypes.AsymmetricPublic);
         }
 
         private void StoreToFile(string key, string owner, KeyTypes type, Password password = null)
         {
-            if (password != default || type==KeyTypes.AsymmetricPrivate)
+            if (password != default || type == KeyTypes.AsymmetricPrivate)
             {
                 if (password == null)
                 {
@@ -141,8 +153,6 @@ namespace Moka.SharedKernel.Encryption
                 {
                     File.WriteAllText($@"{BASEPATH}{owner}_{type}_{password.ToString()}.key", key);
                     File.WriteAllText($@"{BASEPATH}{owner}_{type}.key", "");
-
-
                 }
             }
             else
