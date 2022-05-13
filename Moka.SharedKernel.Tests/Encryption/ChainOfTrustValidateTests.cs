@@ -39,5 +39,15 @@ namespace Moka.SharedKernel.Tests.Encryption
             var validate = _rootchainOfTrust.Validate(selfSignResult);
             Assert.True(validate);
         }
+
+        [Fact]
+        public void RootUserCanValidateSomeSign()
+        {
+            var selfSignResult = _rootchainOfTrust.GenerateRootSign(_rootParams);
+            var valid = _rootchainOfTrust.Validate(selfSignResult, selfSignResult.KeyParam().ObjectifyKey());
+            Assert.True(valid);
+
+        }
+        
     }
 }

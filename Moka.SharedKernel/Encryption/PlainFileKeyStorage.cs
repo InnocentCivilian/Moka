@@ -90,12 +90,18 @@ namespace Moka.SharedKernel.Encryption
             if (IsPublicKeyExist(owner))
             {
                 var key = File.ReadAllText($@"{BASEPATH}{owner}_{KeyTypes.AsymmetricPublic}.key");
-                PemReader pr = new PemReader(new StringReader(key));
-                AsymmetricKeyParameter KeyPair = (AsymmetricKeyParameter) pr.ReadObject();
-                return KeyPair;
+
+                return LoadFromString(key);
             }
 
             throw new FileNotFoundException();
+        }
+
+        public static AsymmetricKeyParameter LoadFromString(string key)
+        {
+            PemReader pr = new PemReader(new StringReader(key));
+            AsymmetricKeyParameter KeyPair = (AsymmetricKeyParameter) pr.ReadObject();
+            return KeyPair;
         }
 
 

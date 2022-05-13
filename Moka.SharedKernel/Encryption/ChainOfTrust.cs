@@ -13,6 +13,22 @@ using Org.BouncyCastle.Crypto.Parameters;
 
 namespace Moka.SharedKernel.Encryption
 {
+    public class KeyParamObject
+    {
+        public string key { get; set; }
+        public SignKeyParameters parameters { get; set; }
+
+        public KeyParamObject(string key, SignKeyParameters parameters)
+        {
+            this.key = key;
+            this.parameters = parameters;
+        }
+
+        public AsymmetricKeyParameter ObjectifyKey()
+        {
+            return PlainFileKeyStorage.LoadFromString(key);
+        }
+    }
     public class SignKeyParameters
     {
         public bool CanIssue { get; set; }
@@ -38,6 +54,7 @@ namespace Moka.SharedKernel.Encryption
             Sign = Convert.ToBase64String(sign);
             Hash = ChainOfTrust.ComputeSha256Hash(payload);
         }
+        
 
         public string ToJson()
         {
@@ -46,6 +63,12 @@ namespace Moka.SharedKernel.Encryption
         public static SignedKeyObject FromJson(string json)
         {
             return JsonConvert.DeserializeObject<SignedKeyObject>(json);
+        }
+
+        public KeyParamObject KeyParam()
+        {
+            return JsonConvert.DeserializeObject<KeyParamObject>(Payload);
+
         }
     }
 
@@ -100,11 +123,8 @@ namespace Moka.SharedKernel.Encryption
 
         public string KeyParametersPair(AsymmetricKeyParameter key, SignKeyParameters parameters)
         {
-            return ConvertBody(new
-            {
-                key = _keyStorage.StringifyPublicKey((RsaKeyParameters) key),
-                parameters
-            });
+            return ConvertBody(new KeyParamObject( _keyStorage.StringifyPublicKey((RsaKeyParameters) key),
+                parameters));
         }
 
         public byte[] ComputeSha256Hash(byte[] rawData)
@@ -144,10 +164,13 @@ namespace Moka.SharedKernel.Encryption
         {
             return _mykey.Asymmetric.Sign(bytes);
         }
+        public bool Validate(SignedKeyObject signedKeyObject,AsymmetricKeyParameter publicKey)
+        {
+            return Validate(signedKeyObject.Hash,signedKeyObject.Sign, publicKey);
+        }
         public bool Validate(SignedKeyObject signedKeyObject)
         {
-            return Validate(signedKeyObject.Hash,signedKeyObject.Sign,
-                _mykey.Asymmetric.GetPublicKey());
+            return Validate(signedKeyObject, _mykey.Asymmetric.GetPublicKey());
         }
         public bool Validate(byte[] payload, byte[] sign)
         {
