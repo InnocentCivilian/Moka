@@ -14,7 +14,7 @@ namespace Moka.SharedKernel.Tests.Encryption
 {
     public class ChainOfTrustTests
     {
-        private ChainOfTrust _chainOfTrust;
+        private ChainOfTrust _rootchainOfTrust;
         private HybridEncryption root;
         private readonly ITestOutputHelper output;
         private readonly AsymmetricKeyParameter _rootPublic;
@@ -24,7 +24,7 @@ namespace Moka.SharedKernel.Tests.Encryption
         {
             this.output = output;
             root = new HybridEncryption(nameof(root));
-            _chainOfTrust = new ChainOfTrust(root);
+            _rootchainOfTrust = new ChainOfTrust(root);
             _rootPublic = root.Asymmetric.GetPublicKey();
             _rootParams = new SignKeyParameters
             {
@@ -36,23 +36,23 @@ namespace Moka.SharedKernel.Tests.Encryption
         [Fact]
         public void KeyParamJsonStringifyAlwaysRemainSame()
         {
-            var firstJson = _chainOfTrust.KeyParametersPair(_rootPublic, _rootParams);
-            var secondJson = _chainOfTrust.KeyParametersPair(_rootPublic, _rootParams);
+            var firstJson = _rootchainOfTrust.KeyParametersPair(_rootPublic, _rootParams);
+            var secondJson = _rootchainOfTrust.KeyParametersPair(_rootPublic, _rootParams);
             Assert.Equal(firstJson, secondJson);
         }
 
         [Fact]
         public void KeyGivenSignKeyNotEmpty()
         {
-            var rootSign = _chainOfTrust.SignHash(_rootPublic, _rootParams);
+            var rootSign = _rootchainOfTrust.SignHash(_rootPublic, _rootParams);
             Assert.NotEmpty(rootSign);
         }
 
         [Fact]
         public void KeyGivenSignReturned()
         {
-            var rootSign = _chainOfTrust.SignHash(_rootPublic, _rootParams);
-            var signedKeyObject = _chainOfTrust.SignedKeyParametersPair(_rootPublic, _rootParams, rootSign);
+            var rootSign = _rootchainOfTrust.SignHash(_rootPublic, _rootParams);
+            var signedKeyObject = _rootchainOfTrust.SignedKeyParametersPair(_rootPublic, _rootParams, rootSign);
             output.WriteLine(signedKeyObject.ToJson());
             Assert.NotEmpty(rootSign);
             Assert.NotEmpty(signedKeyObject.ToJson());
@@ -61,8 +61,8 @@ namespace Moka.SharedKernel.Tests.Encryption
         [Fact]
         public void RootSelfSign_KeyGiven_SelfSigns_ValidatePass()
         {
-            var rootSign = _chainOfTrust.SignHash(_rootPublic, _rootParams);
-            var objfirst = _chainOfTrust.SignedKeyParametersPair(_rootPublic, _rootParams, rootSign);
+            var rootSign = _rootchainOfTrust.SignHash(_rootPublic, _rootParams);
+            var objfirst = _rootchainOfTrust.SignedKeyParametersPair(_rootPublic, _rootParams, rootSign);
             
             var objsecond = SignedKeyObject.FromJson(objfirst.ToJson());
             
@@ -81,13 +81,14 @@ namespace Moka.SharedKernel.Tests.Encryption
         [Fact]
         public void RootSelfSign_SignBytes_ValidatePass()
         {
-            var toSign = _chainOfTrust.KeyParametersPair(_rootPublic, _rootParams);
+            var toSign = _rootchainOfTrust.KeyParametersPair(_rootPublic, _rootParams);
             var toSignBytes = Encoding.UTF8.GetBytes(toSign);
-            var hash = _chainOfTrust.ComputeSha256Hash(toSignBytes);
+            var hash = _rootchainOfTrust.ComputeSha256Hash(toSignBytes);
             // output.WriteLine(hash);
-            var signed = _chainOfTrust.SignBytes(hash);
-            var validate = _chainOfTrust.Validate(hash, signed);
+            var signed = _rootchainOfTrust.SignBytes(hash);
+            var validate = _rootchainOfTrust.Validate(hash, signed);
             Assert.True(validate);
         }
+        
     }
 }

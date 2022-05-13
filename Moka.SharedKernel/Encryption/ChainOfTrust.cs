@@ -32,6 +32,13 @@ namespace Moka.SharedKernel.Encryption
         public string Sign { get; set; }
         public string Hash { get; set; }
 
+        public SignedKeyObject(string payload, byte[] sign)
+        {
+            Payload = payload;
+            Sign = Convert.ToBase64String(sign);
+            Hash = ChainOfTrust.ComputeSha256Hash(payload);
+        }
+
         public string ToJson()
         {
             return ChainOfTrust.ConvertBody(this);
@@ -55,6 +62,20 @@ namespace Moka.SharedKernel.Encryption
             _keyStorage = new PlainFileKeyStorage();
         }
 
+        public SignedKeyObject GenerateRootSign(SignKeyParameters parameters)
+        {
+            return SignKey(_mykey.Asymmetric.GetPublicKey(), parameters);
+            
+        }
+
+        public SignedKeyObject SignKey(AsymmetricKeyParameter publicKey,SignKeyParameters parameters)
+        {
+            var toSign = KeyParametersPair(publicKey, parameters);
+            // var toSignBytes = Encoding.UTF8.GetBytes(toSign);
+            // var hash = ComputeSha256Hash(toSignBytes);
+            var sign = SignHash(publicKey, parameters);
+            return new SignedKeyObject(toSign,sign);
+        }
         public static string ConvertBody(object model)
         {
             return JsonConvert.SerializeObject(model);
@@ -69,12 +90,7 @@ namespace Moka.SharedKernel.Encryption
         public SignedKeyObject SignedKeyParametersPair(AsymmetricKeyParameter key, SignKeyParameters parameters, byte[] sign)
         {
             var payload = KeyParametersPair(key, parameters);
-            return new SignedKeyObject
-            {
-                Payload = payload,
-                Sign = Convert.ToBase64String(sign),
-                Hash = ComputeSha256Hash(payload)
-            };
+            return new SignedKeyObject(payload, sign);
         }
 
         // public SignedKeyObject DeserializeSignedObject(string json)
@@ -99,7 +115,7 @@ namespace Moka.SharedKernel.Encryption
               return  sha256Hash.ComputeHash(rawData);
             }
         }
-        public string ComputeSha256Hash(string rawData)
+        public static string ComputeSha256Hash(string rawData)
         {
             // Create a SHA256   
             using (SHA256 sha256Hash = SHA256.Create())
@@ -117,7 +133,7 @@ namespace Moka.SharedKernel.Encryption
                 return builder.ToString();  
             }
         }
-
+        
         public byte[] SignHash(AsymmetricKeyParameter key, SignKeyParameters parameters)
         {
             var toSign = KeyParametersPair(key, parameters);
@@ -128,20 +144,20 @@ namespace Moka.SharedKernel.Encryption
         {
             return _mykey.Asymmetric.Sign(bytes);
         }
+        public bool Validate(SignedKeyObject signedKeyObject)
+        {
+            return Validate(signedKeyObject.Hash,signedKeyObject.Sign,
+                _mykey.Asymmetric.GetPublicKey());
+        }
         public bool Validate(byte[] payload, byte[] sign)
         {
             return _mykey.Asymmetric.ValidateSign(payload,sign,
                 _mykey.Asymmetric.GetPublicKey());
         }
-        public bool Validate(string payload, string sign)
-        {
-            return _mykey.Asymmetric.ValidateSign(Encoding.UTF8.GetBytes(payload), Encoding.UTF8.GetBytes(sign),
-                _mykey.Asymmetric.GetPublicKey());
-        }
-
+       
         public bool Validate(string payload, string sign, AsymmetricKeyParameter key)
         {
-            return _mykey.Asymmetric.ValidateSign(Encoding.UTF8.GetBytes(payload), Encoding.UTF8.GetBytes(sign), key);
+            return _mykey.Asymmetric.ValidateSign(Encoding.UTF8.GetBytes(payload), Convert.FromBase64String(sign), key);
         }
 
         public string MyTrustChain()
