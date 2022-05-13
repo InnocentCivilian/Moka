@@ -4,6 +4,7 @@
 //  */
 
 using System;
+using System.Linq;
 using Moka.SharedKernel.Encryption;
 using Org.BouncyCastle.Crypto;
 using Xunit;
@@ -21,7 +22,7 @@ namespace Moka.SharedKernel.Tests.Encryption
         private HybridEncryption phoebe;
         private HybridEncryption janice;
         private readonly ITestOutputHelper _output;
-        private readonly SignKeyParameters _rootParams;
+        private readonly SignKeyParameters _issuerParams;
         private ChainOfTrust _rootchainOfTrust;
         private ChainOfTrust _rosschainOfTrust;
         private ChainOfTrust _rachelchainOfTrust;
@@ -49,23 +50,25 @@ namespace Moka.SharedKernel.Tests.Encryption
             _phoebechainOfTrust = new ChainOfTrust(phoebe);
             _janicechainOfTrust = new ChainOfTrust(janice);
             // _rootPublic = root.Asymmetric.GetPublicKey();
-            _rootParams = new SignKeyParameters
+            _issuerParams = new SignKeyParameters
             {
                 CanIssue = true,
                 ExpireAt = new DateTime(2030, 1, 1)
             };
+            MakeChains();
         }
 
         public void MakeChains()
         {
-            var selfSignResult = _rootchainOfTrust.GenerateRootSign(_rootParams);
-
+            var rootSelfSignResult = _rootchainOfTrust.GenerateRootSign(_issuerParams);
+            _rootchainOfTrust.AddToTrusted(rootSelfSignResult);
+            _rootchainOfTrust.SetOwnedKey(rootSelfSignResult);
         }
 
         [Fact]
         public void RootUserCanValidateTheirOwnSign()
         {
-            var selfSignResult = _rootchainOfTrust.GenerateRootSign(_rootParams);
+            var selfSignResult = _rootchainOfTrust.GenerateRootSign(_issuerParams);
             var validate = _rootchainOfTrust.Validate(selfSignResult);
             Assert.True(validate);
         }
@@ -73,9 +76,16 @@ namespace Moka.SharedKernel.Tests.Encryption
         [Fact]
         public void RootUserCanValidateSomeSign()
         {
-            var selfSignResult = _rootchainOfTrust.GenerateRootSign(_rootParams);
+            var selfSignResult = _rootchainOfTrust.GenerateRootSign(_issuerParams);
             var valid = _rootchainOfTrust.Validate(selfSignResult, selfSignResult.KeyParam().ObjectifyKey());
             Assert.True(valid);
+        }
+
+        [Fact]
+        public void RootChainGiven_RootAcceptsRootChain()
+        {
+            var isValid = _rootchainOfTrust.IsValidChain(_rootchainOfTrust.GetChain());
+            Assert.True(isValid);
         }
     }
 }
