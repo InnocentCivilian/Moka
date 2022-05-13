@@ -74,17 +74,27 @@ namespace Moka.SharedKernel.Encryption
 
     public class ChainOfTrust
     {
-        private List<AsymmetricKeyParameter> _trustedRoots;
         private readonly HybridEncryption _mykey;
         private readonly IKeyStorage _keyStorage;
-
+        private List<KeyParamObject> _trustedRoots;
+        private List<SignedKeyObject> _myChain;
         public ChainOfTrust(HybridEncryption key)
         {
-            _trustedRoots = new List<AsymmetricKeyParameter>();
+            _trustedRoots = new List<KeyParamObject>();
+            _myChain = new List<SignedKeyObject>();
             _mykey = key;
             _keyStorage = new PlainFileKeyStorage();
         }
 
+        public void AddParentChain(List<SignedKeyObject> chain)
+        {
+            _myChain.AddRange(chain);
+        }
+
+        public void AddToTrusted(SignedKeyObject key)
+        {
+            _trustedRoots.Add(key.KeyParam());
+        }
         public SignedKeyObject GenerateRootSign(SignKeyParameters parameters)
         {
             return SignKey(_mykey.Asymmetric.GetPublicKey(), parameters);
@@ -105,10 +115,10 @@ namespace Moka.SharedKernel.Encryption
             // return Encoding.UTF8.GetBytes();
         }
 
-        public void AddTrustedRoot(AsymmetricKeyParameter parameter)
-        {
-            _trustedRoots.Add(parameter);
-        }
+        // public void AddTrustedRoot(AsymmetricKeyParameter parameter)
+        // {
+        //     _trustedRoots.Add(parameter);
+        // }
 
         public SignedKeyObject SignedKeyParametersPair(AsymmetricKeyParameter key, SignKeyParameters parameters, byte[] sign)
         {
