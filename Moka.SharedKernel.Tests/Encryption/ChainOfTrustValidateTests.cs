@@ -78,9 +78,16 @@ namespace Moka.SharedKernel.Tests.Encryption
 
         public void MakeChains()
         {
+            //root
             var rootSelfSignResult = _rootchainOfTrust.GenerateRootSign(_issuerParams);
             _rootchainOfTrust.AddToTrusted(rootSelfSignResult);
             _rootchainOfTrust.SetOwnedKey(rootSelfSignResult);
+            //ross : fine can issue
+            var rossSignedByRoot = _rootchainOfTrust.SignKey(ross.Asymmetric.GetPublicKey(), _issuerParams);
+            _rosschainOfTrust.AddParentChain(_rootchainOfTrust.GetChain());
+            _rosschainOfTrust.AddToTrusted(rossSignedByRoot);
+            _rosschainOfTrust.SetOwnedKey(rossSignedByRoot);
+            //
         }
 
         [Fact]
@@ -102,10 +109,28 @@ namespace Moka.SharedKernel.Tests.Encryption
         [Fact]
         public void RootChainGiven_RootAcceptsRootChain()
         {
-            var a = _rootchainOfTrust.GetTrustedRoots().First().key ==
-                    _rootchainOfTrust.GetChain().First().KeyParam().key;
             var isValid = _rootchainOfTrust.IsValidChain(_rootchainOfTrust.GetChain());
+            Assert.True(isValid);
+        }
+
+        [Fact]
+        public void RossChainGiven_RossAcceptsRootChain()
+        {
+            var isValid = _rosschainOfTrust.IsValidChain(_rosschainOfTrust.GetChain());
+            Assert.True(isValid);
+        }
+        [Fact]
+        public void RootChainGiven_RossAcceptsRootChain()
+        {
+            var isValid = _rosschainOfTrust.IsValidChain(_rootchainOfTrust.GetChain());
+            Assert.True(isValid);
+        }
+        [Fact]
+        public void RossChainGiven_RootAcceptsRootChain()
+        {
+            var isValid = _rootchainOfTrust.IsValidChain(_rosschainOfTrust.GetChain());
             Assert.True(isValid);
         }
     }
 }
+
