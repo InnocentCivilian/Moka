@@ -23,6 +23,9 @@ namespace Moka.SharedKernel.Tests.Encryption
         private HybridEncryption janice;
         private readonly ITestOutputHelper _output;
         private readonly SignKeyParameters _issuerParams;
+        private readonly SignKeyParameters _nonissuerParams;
+        private readonly SignKeyParameters _userissuerParams;
+        private readonly SignKeyParameters _expiredParams;
         private ChainOfTrust _rootchainOfTrust;
         private ChainOfTrust _rosschainOfTrust;
         private ChainOfTrust _rachelchainOfTrust;
@@ -55,6 +58,21 @@ namespace Moka.SharedKernel.Tests.Encryption
                 CanIssue = true,
                 ExpireAt = new DateTime(2030, 1, 1)
             };
+            _userissuerParams = new SignKeyParameters
+            {
+                CanIssue = true,
+                ExpireAt = new DateTime(2024, 1, 1)
+            };
+            _expiredParams = new SignKeyParameters
+            {
+                CanIssue = true,
+                ExpireAt = new DateTime(2010, 1, 1)
+            };
+            _nonissuerParams = new SignKeyParameters
+            {
+                CanIssue = false,
+                ExpireAt = new DateTime(2030, 1, 1)
+            };
             MakeChains();
         }
 
@@ -84,6 +102,8 @@ namespace Moka.SharedKernel.Tests.Encryption
         [Fact]
         public void RootChainGiven_RootAcceptsRootChain()
         {
+            var a = _rootchainOfTrust.GetTrustedRoots().First().key ==
+                    _rootchainOfTrust.GetChain().First().KeyParam().key;
             var isValid = _rootchainOfTrust.IsValidChain(_rootchainOfTrust.GetChain());
             Assert.True(isValid);
         }

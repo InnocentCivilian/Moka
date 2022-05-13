@@ -94,6 +94,7 @@ namespace Moka.SharedKernel.Encryption
         {
             _mySignedKeyObject = key;
             _myChain.Add(key);
+            _trustedRoots.Add(key.KeyParam());
         }
 
         public void AddParentChain(List<SignedKeyObject> chain)
@@ -105,7 +106,10 @@ namespace Moka.SharedKernel.Encryption
         {
             return _myChain;
         }
-
+        public List<KeyParamObject> GetTrustedRoots()
+        {
+            return _trustedRoots;
+        }
         public bool IsValidChain(List<SignedKeyObject> chain)
         {
             if (!chain.Any())
@@ -114,6 +118,7 @@ namespace Moka.SharedKernel.Encryption
             }
 
             var isValid = true;
+            var foundTrustedRoot = false;
             var first = chain.First();
             isValid = Validate(first, first.KeyParam().ObjectifyKey());
             if (isValid)
@@ -121,12 +126,17 @@ namespace Moka.SharedKernel.Encryption
                 for (int i = 1; i < chain.Count; i++)
                 {
                     var previousRing = chain[i - 1];
+                    if (!foundTrustedRoot)
+                    {
+                        foundTrustedRoot = _trustedRoots.Exists(x => x.key == previousRing.KeyParam().key);
+                    }
                     var ring = chain[i];
                     isValid &= (previousRing.KeyParam().parameters.CanIssue &&
                                 ring.KeyParam().parameters.ExpireAt > DateTime.Now);
                     if (!isValid) break;
                     isValid &= Validate(ring, previousRing.KeyParam().ObjectifyKey());
                     if (!isValid) break;
+                    
                 }
             }
 
